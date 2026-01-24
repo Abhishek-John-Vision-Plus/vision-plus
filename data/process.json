@@ -1,0 +1,213 @@
+{
+  "processes": [
+    {
+      "id": "elderLine",
+      "name": "ElderLine",
+      "locations": ["National"],
+      "config": {
+        "headings": {
+          "hero_title": "ElderLine - National Helpline for Senior Citizens",
+          "hero_subtitle": "Providing support, information and assistance to the elderly across India.",
+          "footer_text": "Toll Free Number: 14567"
+        },
+        "style": {
+          "primary_color": "#16a34a",
+          "secondary_color": "#22c55e",
+          "accent_color": "#f0fdf4"
+        },
+        "images": {
+          "logo": "/logo/elderline-logo.png",
+          "hero_bg": "/elder-line-bg.jpg",
+          "banner": "/images/1.png"
+        }
+      }
+    },
+    {
+      "id": "bsnl",
+      "name": "BSNL",
+      "locations": ["Zahirabad", "Mehabubnagar"],
+      "config": {
+        "headings": {
+          "hero_title": "BSNL Service Engagement Portal",
+          "hero_subtitle": "Connecting India - Providing quality telecom services to Zahirabad and Mehabubnagar.",
+          "footer_text": "BSNL - A Government of India Enterprise"
+        },
+        "style": {
+          "primary_color": "#003399",
+          "secondary_color": "#FF6600",
+          "accent_color": "#f3f4f6"
+        },
+        "images": {
+          "logo": "/logo/bsnl-logo.png",
+          "hero_bg": "/images/1.png",
+          "banner": "/images/2.png"
+        }
+      }
+    },
+    {
+      "id": "bsnl-kyc",
+      "name": "BSNL KYC",
+      "locations": ["Ashok Nagar"],
+      "config": {
+        "headings": {
+          "hero_title": "BSNL KYC Verification Center",
+          "hero_subtitle": "Simplified KYC process for BSNL customers in Ashok Nagar.",
+          "footer_text": "Official BSNL KYC Portal"
+        },
+        "style": {
+          "primary_color": "#0055aa",
+          "secondary_color": "#ff8800",
+          "accent_color": "#f9fafb"
+        },
+        "images": {
+          "logo": "/logo/bsnl-logo.png",
+          "hero_bg": "/images/3.png",
+          "banner": "/images/4.png"
+        }
+      }
+    },
+    {
+      "id": "recl",
+      "name": "RECL",
+      "locations": ["Noida", "Ajmer"],
+      "config": {
+        "headings": {
+          "hero_title": "RECL Powering Future",
+          "hero_subtitle": "Electrifying lives through sustainable energy solutions in Noida and Ajmer.",
+          "footer_text": "REC Limited - A Maharatna CPSE"
+        },
+        "style": {
+          "primary_color": "#004a99",
+          "secondary_color": "#00a651",
+          "accent_color": "#eff6ff"
+        },
+        "images": {
+          "logo": "/logo/recl-logo.png",
+          "hero_bg": "/images/5.png",
+          "banner": "/images/6.png"
+        }
+      }
+    },
+    {
+      "id": "gst",
+      "name": "GST",
+      "locations": ["Noida", "Bengaluru"],
+      "config": {
+        "headings": {
+          "hero_title": "GST Facilitation Center",
+          "hero_subtitle": "One Nation, One Tax - Simplifying compliance for Noida and Bengaluru.",
+          "footer_text": "Goods and Services Tax Network"
+        },
+        "style": {
+          "primary_color": "#2d3091",
+          "secondary_color": "#ed1c24",
+          "accent_color": "#f8faff"
+        },
+        "images": {
+          "logo": "/logo/gst-logo.png",
+          "hero_bg": "/images/7.png",
+          "banner": "/images/8.png"
+        }
+      }
+    },
+    {
+      "id": "gstat",
+      "name": "GSTAT",
+      "locations": ["Noida"],
+      "config": {
+        "headings": {
+          "hero_title": "GST Appellate Tribunal",
+          "hero_subtitle": "Ensuring justice and fair tax practices in Noida.",
+          "footer_text": "GSTAT Noida Division"
+        },
+        "style": {
+          "primary_color": "#1e3a8a",
+          "secondary_color": "#64748b",
+          "accent_color": "#f1f5f9"
+        },
+        "images": {
+          "logo": "/logo/gstat-logo.png",
+          "hero_bg": "/images/9.png",
+          "banner": "/images/10.png"
+        }
+      }
+    },
+    {
+      "id": "cm-connect",
+      "name": "CM Connect (MP)",
+      "locations": ["Madhya Pradesh"],
+      "config": {
+        "headings": {
+          "hero_title": "CM Connect Madhya Pradesh",
+          "hero_subtitle": "Direct engagement with the citizens of Madhya Pradesh.",
+          "footer_text": "Government of Madhya Pradesh Initiative"
+        },
+        "style": {
+          "primary_color": "#f97316",
+          "secondary_color": "#16a34a",
+          "accent_color": "#fff7ed"
+        },
+        "images": {
+          "logo": "/logo/mp-logo.png",
+          "hero_bg": "/images/1.png",
+          "banner": "/images/3.png"
+        }
+      }
+    },
+    {
+      "id": "aadhar",
+      "name": "Aadhar",
+      "locations": ["Noida", "Ajmer", "Hyderabad", "Jamshedpur"],
+      "config": {
+        "headings": {
+          "hero_title": "Aadhar Enrollment & Update Center",
+          "hero_subtitle": "Providing unique identity services across multiple locations.",
+          "footer_text": "UIDAI - Unique Identification Authority of India"
+        },
+        "style": {
+          "primary_color": "#ef4444",
+          "secondary_color": "#3b82f6",
+          "accent_color": "#fef2f2"
+        },
+        "images": {
+          "logo": "/logo/aadhar-logo.png",
+          "hero_bg": "/images/map.jpeg",
+          "banner": "/images/2.png"
+        }
+      }
+    },
+    {
+      "id": "moh",
+      "name": "MoH",
+      "locations": ["Noida Sector-63"],
+      "config": {
+        "headings": {
+          "hero_title": "Ministry of Health",
+          "hero_subtitle": "Healthcare excellence and public wellness in Noida Sector-63.",
+          "footer_text": "Ministry of Health and Family Welfare"
+        },
+        "style": {
+          "primary_color": "#059669",
+          "secondary_color": "#fbbf24",
+          "accent_color": "#ecfdf5"
+        },
+        "images": {
+          "logo": "/logo/ministry.png",
+          "hero_bg": "/images/4.png",
+          "banner": "/images/5.png"
+        }
+      }
+    }
+  ],
+  "common": {
+    "default_images": {
+      "placeholder": "/placeholder.svg",
+      "emblem": "/icons/emblem.png",
+      "digital_india": "/icons/digitalindia.png"
+    },
+    "contact": {
+      "helpline": "14567",
+      "email": "support@portal.gov.in"
+    }
+  }
+}

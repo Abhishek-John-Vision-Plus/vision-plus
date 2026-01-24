@@ -1,0 +1,66 @@
+import { db } from "@/lib/prisma";
+import { NextResponse } from "next/server";
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    const { email, password } = body;
+
+    if (!email || !password) {
+      return NextResponse.json(
+        { error: "Email/Employee ID and password are required" },
+        { status: 400 }
+      );
+    }
+
+    const user = await db.user.findFirst({
+      where: {
+        OR: [
+          { email: { equals: email.trim(), mode: 'insensitive' } },
+          { empId: { equals: email.trim(), mode: 'insensitive' } }
+        ]
+      },
+    });
+
+    console.log(`Login attempt for: ${email.trim()}`);
+    if (!user) {
+      console.log('User not found in database');
+      return NextResponse.json(
+        { error: "Invalid email or password" },
+        { status: 401 }
+      );
+    }
+
+    if (user.password !== password) {
+      console.log('Password mismatch');
+      return NextResponse.json(
+        { error: "Invalid email or password" },
+        { status: 401 }
+      );
+    }
+
+    console.log('Login successful for:', user.email);
+
+    // In a real app, you would create a session or JWT here
+    const { password: _, ...userData } = user;
+    
+    const response = NextResponse.json({ message: "Login successful", user: userData });
+    
+    // Set a cookie for the userId to allow server-side access in other routes
+    response.cookies.set("userId", user.id, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 7, // 1 week
+      path: "/",
+    });
+
+    return response;
+  } catch (error: any) {
+    console.error("Login error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}

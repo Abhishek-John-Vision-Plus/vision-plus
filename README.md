@@ -1,37 +1,85 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Vision Plus Website
 
-## Getting Started
+Vision Plus Website is a comprehensive Next.js-based web application designed for Vision Limited. It provides a robust platform for user management, service exploration, and employee assessments across various processes.
 
-First, run the development server:
+## 🚀 Tech Stack
+
+- **Framework:** [Next.js 15+](https://nextjs.org/) (App Router)
+- **Styling:** [Tailwind CSS v4](https://tailwindcss.com/)
+- **Database & ORM:** [Prisma](https://www.prisma.io/) with PostgreSQL
+- **Animations:** [Framer Motion](https://www.framer.com/motion/)
+- **Icons:** [Lucide React](https://lucide.dev/)
+- **Package Manager:** [Bun](https://bun.sh/)
+- **Form Handling:** [React Hook Form](https://react-hook-form.com/) & [Zod](https://zod.dev/)
+- **UI Components:** Radix UI primitives
+
+## ✨ Key Features
+
+- **User Authentication:** Secure login and signup flows with role-based access control.
+- **Employee Portal:** Detailed user profiles including designation, team lead info, and city/state tracking.
+- **Assessment Engine:** Integrated testing platform for various services (Aadhar, BSNL, GST, Elderline, etc.).
+- **Dynamic Dashboard:** Real-time analytics and performance tracking for users and assessments.
+- **Modern Responsive UI:** A sleek, dark-themed interface built with the latest Tailwind CSS features and interactive animations.
+- **Service Management:** Showcase of various government and corporate services like GST, RECL, and MP Connect.
+
+## 📁 Project Structure
+
+- `app/`: Next.js App Router routes and components.
+  - `(auth)/`: Authentication related pages (Login/Signup).
+  - `_components/`: Core UI sections (Hero, Services, Testimonials, etc.).
+  - `api/`: Backend API routes for data processing and user management.
+- `components/ui/`: Reusable Radix-based UI components.
+- `context/`: React Context providers for Auth and Process state.
+- `prisma/`: Database schema and migrations.
+- `public/`: Static assets and process-specific imagery.
+- `lib/`: Utility functions and database client initialization.
+
+## 🛠️ Getting Started
+
+### Prerequisites
+
+- [Bun](https://bun.sh/) installed on your machine.
+- A PostgreSQL database instance.
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/vision-limited/vision_plus_website.git
+   cd vision_plus_website
+   ```
+
+2. Install dependencies:
+   ```bash
+   bun install
+   ```
+
+3. Environment Setup:
+   Create a `.env` file in the root directory and add your database URL:
+   ```env
+   DATABASE_URL="postgresql://user:password@localhost:5432/vision_plus_db"
+   ```
+
+4. Database Setup:
+   ```bash
+   bunx prisma generate
+   bunx prisma migrate dev
+   ```
+
+### Running Locally
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the results.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🚢 Deployment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The easiest way to deploy this project is via the [Vercel Platform](https://vercel.com/new).
 
-## Learn More
+Ensure you configure the environment variables and set up a hosted PostgreSQL database (like Supabase or Neon) for production.
 
-To learn more about Next.js, take a look at the following resources:
+## 📄 License
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-"# vision_plus_website" 
+This project is proprietary and confidential. All rights reserved by Vision Limited.

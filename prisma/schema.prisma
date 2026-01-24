@@ -1,0 +1,59 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id          String       @id @default(uuid())
+  name        String
+  email       String       @unique
+  empId       String       @unique
+  password    String
+  process     String  
+  phone       String?      // ✅ new column
+  role        String       @default("USER") // ✅ new column
+  createdAt   DateTime     @default(now())
+  details     UserDetails?
+  assessments AssessmentResult[]
+}
+
+model UserDetails {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName        String
+  lastName         String
+  phoneNumber      String
+  gender           String
+  state            String
+  city             String
+  dateOfBirth      String
+  teamLead         String
+  language         String
+  processAllocated String
+  designation      String
+  address          String
+  consent          Boolean
+  updatedAt        DateTime @updatedAt
+}
+
+model AssessmentResult {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  process          String
+  score            Float
+  correctAnswers   Int
+  wrongAnswers     Int
+  totalQuestions   Int
+  answers          Json     // Stores { questionId: selectedOption }
+  percentage       Float
+  status           String   // e.g., "COMPLETED", "FAILED", "PASSED"
+  createdAt        DateTime @default(now())
+
+  @@index([userId])
+}
