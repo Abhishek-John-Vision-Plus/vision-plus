@@ -57,3 +57,18 @@ model AssessmentResult {
 
   @@index([userId])
 }
+
+model Mcq {
+  id            String   @id @default(uuid())
+  question      String
+  option_a      String?
+  option_b      String?
+  option_c      String?
+  option_d      String?
+  correctOption String?
+  sourceFile    String?
+  process       String?  // Optional: link to a specific process
+  createdAt     DateTime @default(now())
+
+  @@map("mcqs")
+}

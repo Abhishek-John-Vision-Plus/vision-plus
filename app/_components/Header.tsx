@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { useProcess } from '@/context/ProcessContext';
 import { useAuth } from '@/context/AuthContext';
-import { LogOut, User as UserIcon, Settings, ChevronDown } from 'lucide-react';
+import { LogOut, User as UserIcon, Settings, ChevronDown, LayoutDashboardIcon } from 'lucide-react';
 
 import { toast } from 'sonner';
 
@@ -71,6 +71,14 @@ function Header() {
             </div>
 
             <div className="flex items-center gap-3">
+             {user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN' ? (
+                    <Button
+                        onClick={() => router.push('/admin')}
+                        title="Admin Dashboard"
+                    >
+                    Admin <LayoutDashboardIcon className="w-4 h-4" />
+                    </Button>
+                ):<p> </p>}
                 {user ? (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>

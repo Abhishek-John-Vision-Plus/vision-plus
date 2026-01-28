@@ -8,8 +8,10 @@ import Carasoul from './Carasoul'
 import { Badge } from '@/components/ui/badge'
 import { UserDetailsForm } from './UserDetails'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/context/AuthContext'
 
 function Hero({ webData, style }: any) {
+  const { user } = useAuth();
   const router = useRouter()
   const [showDetailsForm, setShowDetailsForm] = useState(false)
 
@@ -115,19 +117,35 @@ function Hero({ webData, style }: any) {
               transition={{ delay: 0.6, duration: 0.8 }}
               className="flex flex-wrap gap-4 pt-4"
             >
-              {webData?.links?.website && (
+              
+              {!user ? (
                 <Button 
-                  onClick={handleAssessmentClick}
+                  onClick={() => router.push('/login')}
                   className="h-14 md:h-16 px-10 rounded-full font-black text-base md:text-lg transition-all duration-500 hover:scale-105 active:scale-95 shadow-2xl group"
                   style={{ 
                     backgroundColor: currentStyle.primary_color,
                     color: currentStyle.accent_color,
                   }}
                 >
+                  Login to your Department
+                  <ExternalLink className="ml-2 w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                </Button>
+              ) : (
+                webData?.links?.website && (
+                  <Button 
+                    onClick={handleAssessmentClick}
+                    className="h-14 md:h-16 px-10 rounded-full font-black text-base md:text-lg transition-all duration-500 hover:scale-105 active:scale-95 shadow-2xl group"
+                    style={{ 
+                      backgroundColor: currentStyle.primary_color,
+                      color: currentStyle.accent_color,
+                    }}
+                  >
                     Visit Official Website
                     <ExternalLink className="ml-2 w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                </Button>
+                  </Button>
+                )
               )}
+             
               <Button 
                 variant="outline"
                 className="h-14 md:h-16 px-10 rounded-full bg-white/5 hover:bg-white/10 border-white/20 text-white font-black text-base md:text-lg backdrop-blur-xl transition-all duration-500 hover:scale-105 active:scale-95 group"

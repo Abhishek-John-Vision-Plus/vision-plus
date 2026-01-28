@@ -3,8 +3,14 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
+    console.log("DATABASE_URL defined:", !!process.env.DATABASE_URL);
+    if (process.env.DATABASE_URL) {
+      const url = new URL(process.env.DATABASE_URL);
+      console.log("DB Host:", url.hostname);
+    }
     const body = await req.json();
-    const { email, password } = body;
+    const email = String(body.email || "").trim();
+    const password = String(body.password || "").trim();
 
     if (!email || !password) {
       return NextResponse.json(
@@ -16,13 +22,13 @@ export async function POST(req: Request) {
     const user = await db.user.findFirst({
       where: {
         OR: [
-          { email: { equals: email.trim(), mode: 'insensitive' } },
-          { empId: { equals: email.trim(), mode: 'insensitive' } }
+          { email: { equals: email, mode: 'insensitive' } },
+          { empId: { equals: email, mode: 'insensitive' } }
         ]
       },
     });
 
-    console.log(`Login attempt for: ${email.trim()}`);
+    console.log(`Login attempt for: ${email}`);
     if (!user) {
       console.log('User not found in database');
       return NextResponse.json(
@@ -57,9 +63,18 @@ export async function POST(req: Request) {
 
     return response;
   } catch (error: any) {
-    console.error("Login error:", error);
+    console.error("LOGIN_ERROR:", error);
+    
+    // Provide more specific error messages for Prisma errors
+    if (error.code === 'P1001') {
+      return NextResponse.json(
+        { error: "Database connection failed. Please ensure the database is reachable." },
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Internal server error", details: error.message },
       { status: 500 }
     );
   }

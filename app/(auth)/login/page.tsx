@@ -15,11 +15,10 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [loginType, setLoginType] = useState<'email' | 'empId'>('email');
   
   const { user, login } = useAuth();
   const { setSelectedProcess } = useProcess();
@@ -39,7 +38,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      await login(email, password);
+      await login(identifier, password);
       toast.success("Welcome back!", {
         description: "You have successfully logged in."
       });
@@ -128,51 +127,23 @@ export default function LoginPage() {
                 <p className="text-slate-500">Sign in to access your assessment</p>
               </div>
 
-              {/* Login Type Toggle */}
-              <div className="flex bg-slate-100 rounded-2xl p-1 mb-6">
-                <button
-                  type="button"
-                  onClick={() => setLoginType('email')}
-                  className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-300 ${
-                    loginType === 'email' 
-                      ? 'bg-white text-emerald-600 shadow-sm' 
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  <Mail size={16} />
-                  Email
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLoginType('empId')}
-                  className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-300 ${
-                    loginType === 'empId' 
-                      ? 'bg-white text-emerald-600 shadow-sm' 
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  <IdCard size={16} />
-                  Employee ID
-                </button>
-              </div>
-
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-slate-700 font-semibold flex items-center gap-2">
-                    {loginType === 'email' ? <Mail size={16} /> : <IdCard size={16} />}
-                    {loginType === 'email' ? 'Email Address' : 'Employee ID'}
+                  <Label htmlFor="identifier" className="text-slate-700 font-semibold flex items-center gap-2">
+                    <Mail size={16} />
+                    Email or Employee ID
                   </Label>
                   <div className="relative">
                     <Input
-                      id="email"
-                      placeholder={loginType === 'email' ? 'Enter your email' : 'Enter your employee ID'}
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      id="identifier"
+                      placeholder="Enter your email or employee ID"
+                      value={identifier}
+                      onChange={(e) => setIdentifier(e.target.value)}
                       className="bg-slate-50/50 border-slate-200 text-slate-900 placeholder:text-slate-400 h-14 rounded-2xl pl-12 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-300"
                       required
                     />
                     <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
-                      {loginType === 'email' ? <Mail size={18} /> : <IdCard size={18} />}
+                      <Users size={18} />
                     </div>
                   </div>
                 </div>
