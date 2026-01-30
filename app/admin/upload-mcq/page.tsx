@@ -7,13 +7,15 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Upload, FileText, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import PdfViewer from "./_components/pdfViewer";
+
 
 export default function UploadMCQPage() {
   const [file, setFile] = useState<File | null>(null);
   const [process, setProcess] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ success: boolean; count?: number; message?: string } | null>(null);
-
+  const [openPdf, setOpenPdf] = useState(false);
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
@@ -166,7 +168,19 @@ export default function UploadMCQPage() {
           <li>Include "Category: Basics | Module: aadhaar-module1" after the answer line</li>
           <li>Separate each question block with a blank line</li>
         </ul>
+        <Button 
+          className="mt-4 w-full h-12 text-lg font-semibold"
+          onClick={() => setOpenPdf(true)}
+        >
+          View Full Format Guidelines
+        </Button>
+        {openPdf && <PdfViewer onClose={() => setOpenPdf(false)} />}
+
       </div>
     </div>
   );
 }
+
+
+  
+    

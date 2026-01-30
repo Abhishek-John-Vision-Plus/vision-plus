@@ -131,7 +131,7 @@ function Hero({ webData, style }: any) {
                   <ExternalLink className="ml-2 w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
                 </Button>
               ) : (
-                webData?.links?.website && (
+                user?.role !== 'SUPER_ADMIN' && user?.role !== 'ADMIN' && webData?.links?.website && (
                   <Button 
                     onClick={handleAssessmentClick}
                     className="h-14 md:h-16 px-10 rounded-full font-black text-base md:text-lg transition-all duration-500 hover:scale-105 active:scale-95 shadow-2xl group"
@@ -140,7 +140,7 @@ function Hero({ webData, style }: any) {
                       color: currentStyle.accent_color,
                     }}
                   >
-                    Visit Official Website
+                    Start Assessment
                     <ExternalLink className="ml-2 w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
                   </Button>
                 )

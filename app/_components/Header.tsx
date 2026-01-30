@@ -76,7 +76,7 @@ function Header() {
                         onClick={() => router.push('/admin')}
                         title="Admin Dashboard"
                     >
-                    Admin <LayoutDashboardIcon className="w-4 h-4" />
+                    {user?.role === 'SUPER_ADMIN' ? 'Super Admin' : 'Admin'} <LayoutDashboardIcon className="w-4 h-4" />
                     </Button>
                 ):<p> </p>}
                 {user ? (
