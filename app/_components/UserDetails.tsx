@@ -34,6 +34,16 @@ export const UserDetailsForm: React.FC<UserDetailsFormProps> = ({ onSubmit, onCa
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // Disable scrolling on body when component mounts
+    document.body.style.overflow = 'hidden';
+    
+    // Re-enable scrolling when component unmounts
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
+
+  useEffect(() => {
     const fetchUserDetails = async () => {
       if (!user) return;
 

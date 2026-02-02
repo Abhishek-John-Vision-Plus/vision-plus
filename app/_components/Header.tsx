@@ -3,18 +3,46 @@
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation';
-
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetClose,
+} from "@/components/ui/sheet"
 import { useProcess } from '@/context/ProcessContext';
 import { useAuth } from '@/context/AuthContext';
-import { LogOut, User as UserIcon, Settings, ChevronDown, LayoutDashboardIcon } from 'lucide-react';
+import { LogOut, User as UserIcon, Settings, ChevronDown, Menu } from 'lucide-react';
 
 import { toast } from 'sonner';
+import { useState } from 'react';
+import Modal from './Modal';
+import UserProfile from './UserProfile';
+
+import SettingComp from './Settings';
+
 
 function Header() {
+      const [open, setOpen] = useState(false);
+      const [openSetting, setOpenSetting] = useState(false);
     const { selectedProcess, setSelectedProcess } = useProcess();
     const { user, logout } = useAuth();
     const router = useRouter();
+
+    const userData = user || {};
     
     const menu = [
         { id: 1, name: 'Home', path: 'home' },
@@ -37,8 +65,44 @@ function Header() {
     return (
         <div className='flex justify-between items-center p-4 shadow-2xl bg-white/30 backdrop-blur-md sticky top-2 z-50 rounded-2xl mx-4'>
             <div className="flex items-center gap-4">
+                {/* Mobile Menu */}
+                <div className="lg:hidden">
+                    <Sheet>
+                        <SheetTrigger asChild>
+                            <Button variant="ghost" size="icon" className="text-primary hover:bg-primary/10">
+                                <Menu className="h-6 w-6" />
+                            </Button>
+                        </SheetTrigger>
+                        <SheetContent side="left" className="w-[300px]">
+                            <SheetHeader>
+                                <SheetTitle className="text-left flex items-center gap-2">
+                                    <Image
+                                        src={'/logo/Vision.png'}
+                                        alt='VISION PLUS'
+                                        height={30}
+                                        width={120}
+                                        className="object-contain"
+                                    />
+                                </SheetTitle>
+                            </SheetHeader>
+                            <div className="flex flex-col gap-6 mt-8">
+                                {menu.map((item) => (
+                                    <SheetClose key={item.id} asChild>
+                                        <h2
+                                            onClick={() => scrollToSection(item.path)}
+                                            className='text-lg font-bold uppercase tracking-widest cursor-pointer text-slate-700 hover:text-primary transition-colors pl-2 border-l-4 border-transparent hover:border-primary'
+                                        >
+                                            {item.name}
+                                        </h2>
+                                    </SheetClose>
+                                ))}
+                            </div>
+                        </SheetContent>
+                    </Sheet>
+                </div>
+
                 <Image
-                    className='cursor-pointer hover:scale-105 transition-transform'
+                    className='cursor-pointer hover:scale-105 transition-transform hidden sm:block'
                     onClick={() => {
                         scrollToSection('home');
                     }}
@@ -46,6 +110,17 @@ function Header() {
                     alt='VISION PLUS'
                     height={40}
                     width={160}
+                />
+                 {/* Mobile Logo (smaller) */}
+                 <Image
+                    className='cursor-pointer hover:scale-105 transition-transform sm:hidden'
+                    onClick={() => {
+                        scrollToSection('home');
+                    }}
+                    src={'/logo/Vision.png'}
+                    alt='VISION PLUS'
+                    height={32}
+                    width={120}
                 />
                 
                 {selectedProcess && (
@@ -71,14 +146,6 @@ function Header() {
             </div>
 
             <div className="flex items-center gap-3">
-             {user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN' ? (
-                    <Button
-                        onClick={() => router.push('/admin')}
-                        title="Admin Dashboard"
-                    >
-                    {user?.role === 'SUPER_ADMIN' ? 'Super Admin' : 'Admin'} <LayoutDashboardIcon className="w-4 h-4" />
-                    </Button>
-                ):<p> </p>}
                 {user ? (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -100,14 +167,16 @@ function Header() {
                             </div>
                             <DropdownMenuItem 
                                 className="cursor-pointer gap-2"
-                                onClick={() => toast.info("Profile feature coming soon!")}
+                                // onClick={() => toast.info("Profile feature coming soon!")}
+                                onClick={() => setOpen(true)}
                             >
                                 <UserIcon className="w-4 h-4" />
                                 Profile
                             </DropdownMenuItem>
+                             
                             <DropdownMenuItem 
                                 className="cursor-pointer gap-2"
-                                onClick={() => toast.info("Settings feature coming soon!")}
+                                onClick={() => setOpenSetting(true)}
                             >
                                 <Settings className="w-4 h-4" />
                                 Settings
@@ -123,13 +192,42 @@ function Header() {
                                 Logout
                             </DropdownMenuItem>
                         </DropdownMenuContent>
+                        
                     </DropdownMenu>
+                    
                 ) : (
                     <Button onClick={() => router.push('/login')} className="bg-primary hover:bg-primary/90">
                         Login
                     </Button>
                 )}
+              
             </div>
+
+            <Modal isOpen={open} onClose={() => setOpen(false)}>
+                <UserProfile user={user ? {
+                    name: user.name || '',
+                    email: user.email || '',
+                    empid: (user as any).empId || '',
+                    phone: (user as any).phone || '',
+                    role: (user as any).role || '',
+                    process: (user as any).process || '',
+                    
+                    createdAt: (user as any).createdAt || '',
+                } : {
+                    name: '',
+                    email: '',
+                    empid: '',
+                    phone: '',
+                    role: '',
+                    process: '',
+                   
+                    createdAt: '',
+                }} />
+                
+            </Modal>
+            <Modal isOpen={openSetting} onClose={() => setOpenSetting(false)}>
+                <SettingComp />
+            </Modal>
         </div>
     )
 }

@@ -1,6 +1,7 @@
 'use client'
 import { Button } from '@/components/ui/button'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import { MapPin, ArrowRight, ExternalLink } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -14,6 +15,11 @@ function Hero({ webData, style }: any) {
   const { user } = useAuth();
   const router = useRouter()
   const [showDetailsForm, setShowDetailsForm] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const currentStyle = webData?.style || style || {
     primary_color: "#1e3a8a",
@@ -34,21 +40,24 @@ function Hero({ webData, style }: any) {
   return (
     <section className="relative w-full max-h-6xl p-6 overflow-hidden bg-slate-950">
       {/* User Details Modal */}
-      <AnimatePresence>
-        {showDetailsForm && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100]"
-          >
-            <UserDetailsForm 
-              onSubmit={handleFormSubmit}
-              onCancel={() => setShowDetailsForm(false)}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {mounted && createPortal(
+        <AnimatePresence>
+          {showDetailsForm && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[9999]"
+            >
+              <UserDetailsForm 
+                onSubmit={handleFormSubmit}
+                onCancel={() => setShowDetailsForm(false)}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* Background Carousel - Full screen */}
       <div className="absolute inset-0 z-0 h-5xl">
