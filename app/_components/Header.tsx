@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/sheet"
 import { useProcess } from '@/context/ProcessContext';
 import { useAuth } from '@/context/AuthContext';
-import { LogOut, User as UserIcon, Settings, ChevronDown, Menu } from 'lucide-react';
+import { LogOut, User as UserIcon, Settings, ChevronDown, Menu, LayoutDashboardIcon, User2 } from 'lucide-react';
 
 import { toast } from 'sonner';
 import { useState } from 'react';
@@ -146,6 +146,14 @@ function Header() {
             </div>
 
             <div className="flex items-center gap-3">
+               {user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN' ? (
+                    <Button
+                        onClick={() => router.push('/admin')}
+                        title="Admin Dashboard"
+                    >
+                    <User2 className="w-4 h-4" />{user?.role === 'SUPER_ADMIN' ? 'Super Admin' : 'Admin'}
+                    </Button>
+                ):<p> </p>}
                 {user ? (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
