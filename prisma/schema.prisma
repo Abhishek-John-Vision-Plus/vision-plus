@@ -5,20 +5,22 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id          String       @id @default(uuid())
+  id          String             @id @default(uuid())
   name        String
-  email       String       @unique
-  empId       String       @unique
+  email       String             @unique
+  empId       String             @unique
   password    String
-  process     String  
-  phone       String?      // ✅ new column
-  role        String       @default("USER") // ✅ new column
-  createdAt   DateTime     @default(now())
+  process     String
+  phone       String? // ✅ new column
+  role        String             @default("USER") // ✅ new column
+  createdAt   DateTime           @default(now())
   details     UserDetails?
   assessments AssessmentResult[]
+  assigned    AssignedQuestion[]
 }
 
 model UserDetails {
@@ -42,33 +44,55 @@ model UserDetails {
 }
 
 model AssessmentResult {
-  id               String   @id @default(uuid())
-  userId           String
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  process          String
-  score            Float
-  correctAnswers   Int
-  wrongAnswers     Int
-  totalQuestions   Int
-  answers          Json     // Stores { questionId: selectedOption }
-  percentage       Float
-  status           String   // e.g., "COMPLETED", "FAILED", "PASSED"
-  createdAt        DateTime @default(now())
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  process        String
+  score          Float
+  correctAnswers Int
+  wrongAnswers   Int
+  totalQuestions Int
+  answers        Json // Stores { questionId: selectedOption }
+  percentage     Float
+  status         String // e.g., "COMPLETED", "FAILED", "PASSED"
+  createdAt      DateTime @default(now())
 
   @@index([userId])
 }
 
 model Mcq {
-  id            String   @id @default(uuid())
+  id            String             @id @default(uuid())
   question      String
+  type          String             @default("MCQ")
+  options       Json?
+  correctAnswer String?
   option_a      String?
   option_b      String?
   option_c      String?
   option_d      String?
   correctOption String?
+  process       String?
+  category      String?
+  module        String?
+  role          String?            @default("BOTH")
   sourceFile    String?
-  process       String?  // Optional: link to a specific process
-  createdAt     DateTime @default(now())
+  createdAt     DateTime           @default(now())
+  assignedBy    AssignedQuestion[]
 
   @@map("mcqs")
+}
+
+model AssignedQuestion {
+  id         String   @id @default(uuid())
+  userId     String
+  mcqId      String
+  assignedBy String?
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mcq  Mcq  @relation(fields: [mcqId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, mcqId])
+  @@index([userId])
+  @@index([mcqId])
 }

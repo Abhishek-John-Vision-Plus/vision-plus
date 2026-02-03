@@ -35,6 +35,7 @@ function Hero({ webData, style }: any) {
   const handleFormSubmit = (details: any) => {
     setShowDetailsForm(false)
     router.push('/Test')
+    //  router.push('/Questionnaire')
   }
 
   return (

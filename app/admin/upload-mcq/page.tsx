@@ -42,7 +42,15 @@ export default function UploadMCQPage() {
         body: formData,
       });
 
-      const data = await res.json();
+      let data;
+      const contentType = res.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        console.error("Non-JSON response from upload:", text);
+        throw new Error(`Server Error: ${res.status} ${res.statusText}. Please check the server logs.`);
+      }
 
       if (!res.ok) {
         throw new Error(data.error || "Upload failed");

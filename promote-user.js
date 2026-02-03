@@ -1,6 +1,4 @@
 const { PrismaClient } = require('@prisma/client');
-const { PrismaPg } = require('@prisma/adapter-pg');
-const { Pool } = require('pg');
 const dotenv = require('dotenv');
 
 dotenv.config();
@@ -12,12 +10,7 @@ async function promote() {
     process.exit(1);
   }
 
-  const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }
-  });
-  const adapter = new PrismaPg(pool);
-  const prisma = new PrismaClient({ adapter });
+  const prisma = new PrismaClient();
 
   try {
     const user = await prisma.user.update({
@@ -29,7 +22,6 @@ async function promote() {
     console.error("Error promoting user:", error.message);
   } finally {
     await prisma.$disconnect();
-    await pool.end();
   }
 }
 

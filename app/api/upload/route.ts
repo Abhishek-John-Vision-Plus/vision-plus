@@ -23,11 +23,17 @@ const ensurePdfJsPolyfills = () => {
     g.Path2D = class {};
   }
 };
+ensurePdfJsPolyfills();
+
+// Dynamic import for pdf-parse
+const getPdfParser = async () => {
+  const pdfParse = await import("pdf-parse");
+  // Handle different module export styles
+ //@ts-ignore
+  return pdfParse.default || pdfParse;
+};
 
 export async function POST(req: Request) {
-  ensurePdfJsPolyfills();
-  const pdfModule = await import("pdf-parse");
-  const pdf = (pdfModule as any).default || (pdfModule as any);
   try {
     const formData = await req.formData();
     const file = formData.get("file") as File;
@@ -39,7 +45,8 @@ export async function POST(req: Request) {
     if (file) {
       const buffer = Buffer.from(await file.arrayBuffer());
       if (file.name.endsWith(".pdf")) {
-        const data = await pdf(buffer);
+        const parsePdf = await getPdfParser();
+        const data = await parsePdf(buffer);
         text = data.text;
       } else if (file.name.endsWith(".docx")) {
         const result = await mammoth.extractRawText({ buffer });
@@ -57,49 +64,32 @@ export async function POST(req: Request) {
 
     if (mcqs.length === 0) {
       return NextResponse.json({ 
-        error: "No MCQs found in file. Ensure the format matches (1. Question, A. Option, Answer: A)" 
+        error: "No MCQs found. Ensure format matches (1. Question, A. Option, Correct Answer: A, Category: ..., Module: ...)" 
       }, { status: 422 });
     }
-
-    await db.$executeRawUnsafe(`
-      CREATE TABLE IF NOT EXISTS mcqs (
-        id uuid PRIMARY KEY,
-        question text NOT NULL,
-        option_a text,
-        option_b text,
-        option_c text,
-        option_d text,
-        "correctOption" text,
-        
-        process text,
-        "createdAt" timestamptz NOT NULL DEFAULT now()
-      )
-    `);
-    await db.$executeRawUnsafe(`
-      ALTER TABLE mcqs
-        ADD COLUMN IF NOT EXISTS "correctOption" text,
-       
-        ADD COLUMN IF NOT EXISTS "createdAt" timestamptz NOT NULL DEFAULT now()
-    `);
 
     // Store in DB
     const created = await db.mcq.createMany({
       data: mcqs.map((m) => ({
         id: randomUUID(),
         question: m.question,
+        type: "MCQ",
+        options: [m.option_a, m.option_b, m.option_c, m.option_d],
+        correctAnswer: m.correctOption || null,
         option_a: m.option_a,
         option_b: m.option_b,
         option_c: m.option_c,
         option_d: m.option_d,
         correctOption: m.correctOption || null,
-       
         process: processName || null,
+        category: m.category || null,
+        module: m.module || null,
       })),
     });
     return NextResponse.json({ 
       success: true, 
       count: created.count,
-      message: `${created.count} MCQs extracted and saved successfully.`
+      message: `${created.count} questions extracted and saved successfully.`
     });
   } catch (error: any) {
     console.error("UPLOAD_ERROR:", error);

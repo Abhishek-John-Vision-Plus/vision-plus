@@ -1,0 +1,14 @@
+# 1. Format the schema
+npx prisma format
+
+# 2. Generate the Prisma Client (this is crucial!)
+npx prisma generate
+
+# 3. Push the schema to your database (if needed)
+npx prisma db push
+
+# Or create a migration instead:
+npx prisma migrate dev --name fix-mcq-type-field
+
+
+node check-prisma.js

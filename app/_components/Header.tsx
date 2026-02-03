@@ -50,10 +50,15 @@ function Header() {
         { id: 3, name: 'Services', path: 'services' },
         { id: 4, name: 'Projects', path: 'projects' },
         { id: 5, name: 'Testimonials', path: 'testimonials' },
-        { id: 6, name: 'Contact', path: 'contact' },
+        { id: 6, name: 'Questionnaire', path: '/Questionnaire', type: 'link' },
+        { id: 7, name: 'Contact', path: 'contact' },
     ]
 
-    const scrollToSection = (id: string) => {
+    const scrollToSection = (id: string, type?: string) => {
+        if (type === 'link') {
+            router.push(id);
+            return;
+        }
         const element = document.getElementById(id);
         if (element) {
             element.scrollIntoView({ behavior: 'smooth' });
@@ -82,6 +87,7 @@ function Header() {
                                         height={30}
                                         width={120}
                                         className="object-contain"
+                                        priority
                                     />
                                 </SheetTitle>
                             </SheetHeader>
@@ -89,7 +95,7 @@ function Header() {
                                 {menu.map((item) => (
                                     <SheetClose key={item.id} asChild>
                                         <h2
-                                            onClick={() => scrollToSection(item.path)}
+                                            onClick={() => scrollToSection(item.path, item.type)}
                                             className='text-lg font-bold uppercase tracking-widest cursor-pointer text-slate-700 hover:text-primary transition-colors pl-2 border-l-4 border-transparent hover:border-primary'
                                         >
                                             {item.name}
@@ -110,6 +116,7 @@ function Header() {
                     alt='VISION PLUS'
                     height={40}
                     width={160}
+                    priority
                 />
                  {/* Mobile Logo (smaller) */}
                  <Image
@@ -121,6 +128,7 @@ function Header() {
                     alt='VISION PLUS'
                     height={32}
                     width={120}
+                    priority
                 />
                 
                 {selectedProcess && (
@@ -137,7 +145,7 @@ function Header() {
                 {menu.map((item) => (
                     <h2
                         key={item.id}
-                        onClick={() => scrollToSection(item.path)}
+                        onClick={() => scrollToSection(item.path, item.type)}
                         className='text-sm font-bold uppercase tracking-widest cursor-pointer text-slate-700 hover:text-primary transition-colors'
                     >
                         {item.name}

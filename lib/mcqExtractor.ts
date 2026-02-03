@@ -17,6 +17,8 @@ export interface ExtractedMCQ {
   option_c: string;
   option_d: string;
   correctOption: string;
+  category?: string;
+  module?: string;
 }
 
 export function extractMCQs(text: string): ExtractedMCQ[] {
@@ -30,6 +32,7 @@ export function extractMCQs(text: string): ExtractedMCQ[] {
   const optionRegex = /^[A-Da-d][\.\)\:\-\s]+(.*)$/;
   const inlineOptionsRegex = /([A-Da-d])[.\)\:\-\s]+([\s\S]*?)(?=\s+[A-Da-d][.\)\:\-\s]+|$)/g;
   const answerRegex = /(?:^|\s)(?:answer|ans|correct[\s-]*answer|correct[\s-]*option|answer[\s-]*is)[:\-\s]*([A-Da-d])/i;
+  const categoryModuleRegex = /Category:\s*(.*?)\s*\|\s*Module:\s*(.*)/i;
 
   let i = 0;
   while (i < lines.length) {
@@ -45,10 +48,20 @@ export function extractMCQs(text: string): ExtractedMCQ[] {
     let optionC = "";
     let optionD = "";
     let correctOption = "";
+    let category = "";
+    let module = "";
 
     let block = "";
     while (i < lines.length && !isQuestion(lines[i])) {
       const line = lines[i];
+      
+      // Check for Category and Module
+      const catModMatch = line.match(categoryModuleRegex);
+      if (catModMatch) {
+        category = catModMatch[1].trim();
+        module = catModMatch[2].trim();
+      }
+
       const optMatch = line.match(optionRegex);
       if (optMatch) {
         const key = line[0].toUpperCase();
@@ -90,6 +103,8 @@ export function extractMCQs(text: string): ExtractedMCQ[] {
         option_c: optionC,
         option_d: optionD,
         correctOption,
+        category: category || undefined,
+        module: module || undefined,
       });
     }
   }
