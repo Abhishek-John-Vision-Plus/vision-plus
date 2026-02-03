@@ -171,7 +171,28 @@ export default function QuestionnairePage() {
 
   if (!user) return <div className="p-20 text-center">Please log in.</div>;
   if (loading && !questions.length) return <div className="p-20 text-center flex flex-col items-center gap-4"><Loader2 className="animate-spin w-10 h-10" /> Loading Questionnaire...</div>;
-  if (error) return <div className="p-20 text-center text-red-500">Error: {error}</div>;
+  if (error) {
+    // Check if it's the "No questions" error
+    if (error.includes("No questions added")) {
+      return (
+        <div className="min-h-screen bg-slate-50 py-12 px-4 flex items-center justify-center">
+          <Card className="max-w-md w-full text-center p-8 shadow-xl">
+            <div className="bg-slate-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <HelpCircle className="w-10 h-10 text-slate-400" />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">No Questions Available</h2>
+            <p className="text-slate-500 mb-8">
+              There are currently no questions added for the <span className="font-bold text-slate-700">{selectedProcess?.name}</span> process.
+            </p>
+            <Button onClick={() => window.location.href = "/"} className="w-full">
+              Return to Dashboard
+            </Button>
+          </Card>
+        </div>
+      );
+    }
+    return <div className="p-20 text-center text-red-500">Error: {error}</div>;
+  }
 
   if (isSubmitted && result) {
     return (
@@ -197,9 +218,39 @@ export default function QuestionnairePage() {
                   <p className="text-4xl font-black text-slate-900">{result.percentage.toFixed(1)}%</p>
                 </div>
               </div>
-              <Button onClick={() => window.location.href = "/"} className="w-full mt-10 h-14 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-lg shadow-lg">
-                Return to Home
-              </Button>
+                <div className="mt-10 space-y-4">
+                  <h3 className="text-xl font-bold text-slate-800 border-b pb-2">Review Your Answers</h3>
+                  {result.answers && Array.isArray(result.answers) && result.answers.map((ans: any, idx: number) => (
+                    <div key={idx} className={`p-4 rounded-2xl border-l-4 ${ans.isCorrect ? 'bg-emerald-50 border-emerald-500' : 'bg-red-50 border-red-500'}`}>
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <p className="font-bold text-slate-800">Q{idx + 1}: {ans.question}</p>
+                        {ans.isCorrect ? (
+                          <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
+                        ) : (
+                          <AlertCircle className="h-5 w-5 text-red-600 shrink-0" />
+                        )}
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm mt-3">
+                        <div className="p-2 rounded bg-white/50">
+                          <p className="text-slate-500 font-bold mb-1 uppercase text-[10px]">Your Answer</p>
+                          <p className={ans.isCorrect ? 'text-emerald-700 font-medium' : 'text-red-700 font-medium'}>{ans.selectedAnswer || 'Not answered'}</p>
+                        </div>
+                        {!ans.isCorrect && (
+                          <div className="p-2 rounded bg-white/50">
+                            <p className="text-slate-500 font-bold mb-1 uppercase text-[10px]">Correct Answer</p>
+                            <p className="text-emerald-700 font-bold">{ans.correctAnswer}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-10 flex flex-col gap-4">
+                  <Button onClick={() => window.location.href = "/"} className="w-full h-14 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-lg shadow-lg">
+                    Return to Home
+                  </Button>
+                </div>
             </CardContent>
           </Card>
         </div>

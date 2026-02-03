@@ -75,11 +75,21 @@ export const GET = async (
     }
 
     // Check for assigned questions to this user first
-    const assignments = await db.assignedQuestion.findMany({
-      where: { userId },
-      select: { mcqId: true },
-    });
-    let dbQuestions;
+    let assignments: any[] = [];
+    try {
+      // @ts-ignore
+      if (db.assignedQuestion) {
+        // @ts-ignore
+        assignments = await db.assignedQuestion.findMany({
+          where: { userId },
+          select: { mcqId: true },
+        });
+      }
+    } catch (e) {
+      console.warn("Could not fetch assigned questions (Model might be missing pending restart):", e);
+    }
+
+    let dbQuestions: any[] = [];
     if (assignments.length > 0) {
       const ids = assignments.map(a => a.mcqId);
       dbQuestions = await db.mcq.findMany({
@@ -101,11 +111,13 @@ export const GET = async (
 
     if (dbQuestions.length > 0) {
       // Map DB questions to a consistent format
-      return NextResponse.json(dbQuestions.map(q => ({
+      const mappedQuestions = dbQuestions.map(q => ({
         id: q.id,
         question_text: q.question,
         type: q.type,
-        options: q.options,
+        options: typeof q.options === 'string' 
+          ? (() => { try { return JSON.parse(q.options) } catch { return null } })() 
+          : q.options,
         correct_option: q.correctAnswer || q.correctOption,
         option_a: q.option_a,
         option_b: q.option_b,
@@ -114,10 +126,18 @@ export const GET = async (
         category: q.category || "General",
         module: q.module || "General",
         role: q.role || "BOTH"
-      })));
+      }));
+
+      // Randomize questions using Fisher-Yates shuffle
+      for (let i = mappedQuestions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [mappedQuestions[i], mappedQuestions[j]] = [mappedQuestions[j], mappedQuestions[i]];
+      }
+
+      return NextResponse.json(mappedQuestions);
     }
 
-    let selectedQuestions;
+    let selectedQuestions: any[] = [];
 
     switch (processName.toLowerCase()) {
       case "elderline":
@@ -128,23 +148,35 @@ export const GET = async (
             (q) => q.role === userRole || q.role === "BOTH"
           );
         } else {
-          selectedQuestions = elderQuestions;
+          selectedQuestions = [...elderQuestions];
         }
         break;
       case "aadhar":
-        selectedQuestions = aadhaarQuestions;
+        selectedQuestions = [...aadhaarQuestions];
         break;
       case "bsnl":
-        selectedQuestions = bsnlQuestions;
+        selectedQuestions = [...bsnlQuestions];
         break;
       case "gst":
-        selectedQuestions = gstQuestions;
+        selectedQuestions = [...gstQuestions];
         break;
       default:
-        return NextResponse.json(
-          { message: `No questionnaire found for process: ${processName}` },
-          { status: 404 }
-        );
+        // Instead of 404 immediately, return empty array to be handled by UI
+        selectedQuestions = [];
+        break;
+    }
+
+    if (selectedQuestions.length === 0) {
+      return NextResponse.json(
+        { message: "No questions added for this process yet." },
+        { status: 404 }
+      );
+    }
+
+    // Randomize static questions
+    for (let i = selectedQuestions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [selectedQuestions[i], selectedQuestions[j]] = [selectedQuestions[j], selectedQuestions[i]];
     }
 
     return NextResponse.json(selectedQuestions);

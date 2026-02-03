@@ -29,16 +29,32 @@ export async function GET() {
               name: true,
               email: true,
               empId: true,
-            }
-          }
+            },
+          },
         },
         orderBy: { createdAt: "desc" },
       });
     } else {
       // Admin only sees results for their process
+      // Map process key (e.g., "aadhar") to possible names (e.g., "Aadhaar", "Aadhar")
+      const processKey = requester.process?.toLowerCase();
+      const possibleNames = [processKey];
+      
+      if (processKey === 'aadhar' || processKey === 'aadhaar') {
+        possibleNames.push('aadhar', 'aadhaar', 'Aadhar', 'Aadhaar');
+      }
+
       results = await db.assessmentResult.findMany({
         where: {
-          process: requester.process,
+          OR: [
+            { process: { in: possibleNames } },
+            {
+              process: {
+                contains: requester.process,
+                mode: "insensitive",
+              },
+            },
+          ],
         },
         include: {
           user: {
@@ -46,8 +62,8 @@ export async function GET() {
               name: true,
               email: true,
               empId: true,
-            }
-          }
+            },
+          },
         },
         orderBy: { createdAt: "desc" },
       });
