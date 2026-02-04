@@ -1,0 +1,42 @@
+name: CD - Deploy to Staging
+
+on:
+  push:
+    branches: [develop]
+
+jobs:
+  deploy-staging:
+    name: 🚀 Deploy to Staging
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://staging.yourdomain.com
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: 🔑 Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.STAGING_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.STAGING_HOST }} >> ~/.ssh/known_hosts
+
+      - name: 🚀 Deploy
+        run: |
+          ssh ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }} << 'EOF'
+            docker pull ghcr.io/${{ github.repository }}:${{ github.sha }}
+            docker stop app-staging || true
+            docker rm app-staging || true
+            docker run -d \
+              --name app-staging \
+              --restart unless-stopped \
+              -p 3000:3000 \
+              -e DATABASE_URL="${{ secrets.STAGING_DATABASE_URL }}" \
+              ghcr.io/${{ github.repository }}:${{ github.sha }}
+          EOF
+
+      - name: ✅ Health Check
+        run: |
+          sleep 10
+          curl -f https://staging.yourdomain.com/api/health
