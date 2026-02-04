@@ -9,18 +9,19 @@ datasource db {
 }
 
 model User {
-  id          String             @id @default(uuid())
-  name        String
-  email       String             @unique
-  empId       String             @unique
-  password    String
-  process     String
-  phone       String? // ✅ new column
-  role        String             @default("USER") // ✅ new column
-  createdAt   DateTime           @default(now())
-  details     UserDetails?
-  assessments AssessmentResult[]
-  assigned    AssignedQuestion[]
+  id            String             @id @default(uuid())
+  name          String
+  email         String             @unique
+  empId         String             @unique
+  password      String
+  process       String
+  phone         String? // ✅ new column
+  role          String             @default("USER") // ✅ new column
+  createdAt     DateTime           @default(now())
+  questionCount Int                @default(15) // ✅ new column: number of questions user must answer
+  details       UserDetails?
+  assessments   AssessmentResult[]
+  assigned      AssignedQuestion[]
 }
 
 model UserDetails {

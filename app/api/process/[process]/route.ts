@@ -134,7 +134,10 @@ export const GET = async (
         [mappedQuestions[i], mappedQuestions[j]] = [mappedQuestions[j], mappedQuestions[i]];
       }
 
-      return NextResponse.json(mappedQuestions);
+      // Limit based on user.questionCount
+      const limitedQuestions = mappedQuestions.slice(0, user.questionCount || 15);
+
+      return NextResponse.json(limitedQuestions);
     }
 
     let selectedQuestions: any[] = [];
@@ -179,7 +182,10 @@ export const GET = async (
       [selectedQuestions[i], selectedQuestions[j]] = [selectedQuestions[j], selectedQuestions[i]];
     }
 
-    return NextResponse.json(selectedQuestions);
+    // Limit based on user.questionCount
+    const limitedStaticQuestions = selectedQuestions.slice(0, user.questionCount || 15);
+
+    return NextResponse.json(limitedStaticQuestions);
   } catch (error: any) {
     console.error("Process API Error:", error);
     return NextResponse.json(

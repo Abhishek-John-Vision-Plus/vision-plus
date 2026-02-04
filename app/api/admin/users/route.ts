@@ -20,10 +20,25 @@ export async function GET() {
     }
 
     let users;
+    let processQuestionCounts: Record<string, number> = {};
+
     if (requester.role === "SUPER_ADMIN") {
       // Super Admin sees everyone
       users = await db.user.findMany({
         orderBy: { createdAt: "desc" },
+      });
+
+      // Fetch question counts for all processes
+      const processes = await db.mcq.groupBy({
+        by: ['process'],
+        _count: {
+          id: true
+        }
+      });
+      processes.forEach(p => {
+        if (p.process) {
+          processQuestionCounts[p.process] = p._count.id;
+        }
       });
     } else {
       // Admin only sees users in their process
@@ -33,9 +48,15 @@ export async function GET() {
         },
         orderBy: { createdAt: "desc" },
       });
+
+      // Fetch question count for their specific process
+      const count = await db.mcq.count({
+        where: { process: requester.process }
+      });
+      processQuestionCounts[requester.process] = count;
     }
 
-    return NextResponse.json({ users });
+    return NextResponse.json({ users, processQuestionCounts });
   } catch (error: any) {
     console.error("ADMIN_USERS_FETCH_ERROR:", error);
     return NextResponse.json(

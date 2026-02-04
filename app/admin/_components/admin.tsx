@@ -23,7 +23,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Webdata } from '@/data/data'
 import { toast } from 'sonner'
-import { Shield, ShieldAlert, User as UserIcon, Loader2, Filter } from 'lucide-react'
+import { Shield, ShieldAlert, User as UserIcon, Loader2, Filter, Save as SaveIcon } from 'lucide-react'
+import { Input } from '@/components/ui/input'
 
 interface UserData {
   id: string
@@ -33,16 +34,19 @@ interface UserData {
   process: string
   phone: string | null
   role: string
+  questionCount: number
 }
 
 function AdminPage() {
   const { user, isLoading: authLoading } = useAuth()
   const router = useRouter()
   const [users, setUsers] = useState<UserData[]>([])
+  const [totalProcessQuestions, setTotalProcessQuestions] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [filterProcess, setFilterProcess] = useState<string>('all')
-console.log(user)
+  const [tempQuestionCounts, setTempQuestionCounts] = useState<Record<string, number>>({})
+
   const processes = Object.keys(Webdata.processes)
 
   useEffect(() => {
@@ -62,6 +66,14 @@ console.log(user)
       if (!res.ok) throw new Error('Failed to fetch users')
       const data = await res.json()
       setUsers(data.users)
+      setTotalProcessQuestions(data.processQuestionCounts || {})
+      
+      // Initialize temp counts
+      const counts: Record<string, number> = {}
+      data.users.forEach((u: UserData) => {
+        counts[u.id] = u.questionCount
+      })
+      setTempQuestionCounts(counts)
     } catch (error) {
       console.error(error)
       toast.error('Failed to load users')
@@ -70,7 +82,7 @@ console.log(user)
     }
   }
 
-  const handleUpdateUser = async (targetUserId: string, updates: { role?: string, process?: string }) => {
+  const handleUpdateUser = async (targetUserId: string, updates: { role?: string, process?: string, questionCount?: number }) => {
     setUpdatingId(targetUserId)
     try {
       const res = await fetch('/api/admin/update-user', {
@@ -163,6 +175,8 @@ console.log(user)
               <TableHead>{HeaderTitle[3]}</TableHead>
               <TableHead>{HeaderTitle[4]}</TableHead>
               <TableHead>{HeaderTitle[5]}</TableHead>
+              <TableHead>Questions To Answer</TableHead>
+              <TableHead>Total Questions</TableHead>
               <TableHead>{HeaderTitle[6]}</TableHead>
               <TableHead>{HeaderTitle[7]}</TableHead>
               {isSuperAdmin && <TableHead className="text-right">{HeaderTitle[8]}</TableHead>}
@@ -171,7 +185,7 @@ console.log(user)
           <TableBody>
             {filteredUsers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={isSuperAdmin ? 8 : 7} className="h-24 text-center">
+                <TableCell colSpan={isSuperAdmin ? 9 : 8} className="h-24 text-center">
                   No users found.
                 </TableCell>
               </TableRow>
@@ -201,6 +215,37 @@ console.log(user)
                     ) : (
                       <Badge variant="outline">{u.process.toUpperCase()}</Badge>
                     )}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        className="h-8 w-16 text-xs"
+                        value={tempQuestionCounts[u.id] !== undefined ? tempQuestionCounts[u.id] : u.questionCount}
+                        onChange={(e) => {
+                          const val = e.target.value === '' ? 0 : parseInt(e.target.value)
+                          if (!isNaN(val)) {
+                            setTempQuestionCounts(prev => ({ ...prev, [u.id]: val }))
+                          }
+                        }}
+                      />
+                      {tempQuestionCounts[u.id] !== undefined && tempQuestionCounts[u.id] !== u.questionCount && (
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className="h-7 w-7 text-green-600 hover:text-green-700 hover:bg-green-50"
+                          disabled={updatingId === u.id}
+                          onClick={() => handleUpdateUser(u.id, { questionCount: tempQuestionCounts[u.id] })}
+                        >
+                          <SaveIcon className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="secondary" className="font-mono">
+                      {totalProcessQuestions[u.process] || 0}
+                    </Badge>
                   </TableCell>
                   <TableCell>{u.phone || 'N/A'}</TableCell>
                   <TableCell>
