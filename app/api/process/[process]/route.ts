@@ -135,7 +135,7 @@ export const GET = async (
       }
 
       // Limit based on user.questionCount
-      const limitedQuestions = mappedQuestions.slice(0, user.questionCount || 15);
+      const limitedQuestions = mappedQuestions.slice(0, 15);
 
       return NextResponse.json(limitedQuestions);
     }
@@ -183,7 +183,7 @@ export const GET = async (
     }
 
     // Limit based on user.questionCount
-    const limitedStaticQuestions = selectedQuestions.slice(0, user.questionCount || 15);
+    const limitedStaticQuestions = selectedQuestions.slice(0, 15);
 
     return NextResponse.json(limitedStaticQuestions);
   } catch (error: any) {
