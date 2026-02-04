@@ -1,0 +1,25 @@
+Here is a short summary of the key features developed and the critical issues fixed in this session:
+
+**Key Features Developed**
+
+- **Production-Grade Exam Architecture**: Designed a session-based system where questions are randomized once on the backend and order is locked for the duration of the exam.
+- **Topic-Based Rule Control**: Added the ability for admins to define `minAttempt`, `maxDisplay`, and `requiredAttempt` per topic, ensuring strict control over how many questions a user must answer.
+- **Enhanced Admin Controls**:
+    - Enabled **Process Admins** to manage question counts for their own users.
+    - Added a **Total Questions** column in the dashboard to show how many questions exist for each process.
+    - Implemented a **Safe-Save UI** for question counts to prevent accidental database updates.
+- **Session Snapshotting**: Created a system that snapshots exam rules at the start of a test, protecting active users from being affected by mid-test admin changes.
+
+**Critical Issues Fixed**
+
+- **Data Visibility Fix**: Resolved a mismatch where "Total Questions" showed `0` due to inconsistent process naming (e.g., "ElderLine" vs "Elder Line"). Implemented a **Normalization Layer** (uppercase + space removal) to consolidate counts.
+- **API Runtime Errors**: Fixed a `groupBy` crash in the admin API by correcting the Prisma model reference from `db.question` to `db.mcq`.
+- **UI Robustness**: Fixed `NaN` and empty-input crashes in the admin dashboard by adding safe parsing for the question count input field.
+- **Prisma/Database Sync**: Successfully synchronized the database schema with the new `ExamSession` and `TopicRule` models using `prisma db push`.
+
+**Core Files Modified**
+
+- [admin.tsx](file:///c:/Users/user/Documents/vision_plus_website-official/app/admin/_components/admin.tsx): Dashboard UI and normalization logic.
+- [users/route.ts](file:///c:/Users/user/Documents/vision_plus_website-official/app/api/admin/users/route.ts): Aggregated question count API.
+- [schema.prisma](file:///c:/Users/user/Documents/vision_plus_website-official/prisma/schema.prisma): New session and topic-based rule models.
+- [start/route.ts](file:///c:/Users/user/Documents/vision_plus_website-official/app/api/exam/start/route.ts): Server-side randomization and session initialization logic.

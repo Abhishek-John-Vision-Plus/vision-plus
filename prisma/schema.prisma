@@ -22,6 +22,67 @@ model User {
   details       UserDetails?
   assessments   AssessmentResult[]
   assigned      AssignedQuestion[]
+  examSessions  ExamSession[]
+}
+
+model TopicRule {
+  id              String   @id @default(uuid())
+  process         String   // The exam name/process (e.g., "PROCESS_A")
+  category        String   // The topic name
+  minAttempt      Int      @default(0)
+  maxDisplay      Int      @default(0)
+  requiredAttempt Int?     // If set, must answer exactly this many
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([process, category])
+}
+
+model ExamSession {
+  id            String             @id @default(uuid())
+  userId        String
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  process       String
+  status        String             @default("ACTIVE") // ACTIVE, COMPLETED, EXPIRED
+  startTime     DateTime           @default(now())
+  endTime       DateTime?
+  rulesSnapshot Json               // Snapshotted rules for this session
+  questions     SessionQuestion[]
+  answers       SessionAnswer[]
+  
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  @@index([userId, status])
+}
+
+model SessionQuestion {
+  id        String      @id @default(uuid())
+  sessionId String
+  session   ExamSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  mcqId     String
+  mcq       Mcq         @relation(fields: [mcqId], references: [id], onDelete: Cascade)
+  order     Int         // Fixed order for this session
+  category  String      // Category at the time of assignment
+  
+  createdAt DateTime    @default(now())
+
+  @@unique([sessionId, mcqId])
+  @@index([sessionId, order])
+}
+
+model SessionAnswer {
+  id        String      @id @default(uuid())
+  sessionId String
+  session   ExamSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  mcqId     String
+  answer    String
+  isCorrect Boolean
+  category  String      // Category of the question
+  
+  createdAt DateTime    @default(now())
+
+  @@unique([sessionId, mcqId])
 }
 
 model UserDetails {
@@ -79,6 +140,7 @@ model Mcq {
   sourceFile    String?
   createdAt     DateTime           @default(now())
   assignedBy    AssignedQuestion[]
+  sessions      SessionQuestion[]
 
   @@map("mcqs")
 }

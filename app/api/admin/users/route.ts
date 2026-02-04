@@ -37,7 +37,9 @@ export async function GET() {
       });
       processes.forEach(p => {
         if (p.process) {
-          processQuestionCounts[p.process] = p._count.id;
+          // Normalize the process name for consistent lookup (e.g., "ElderLine" or "Elder Line" -> "ELDERLINE")
+          const normalizedKey = p.process.toUpperCase().replace(/\s+/g, '');
+          processQuestionCounts[normalizedKey] = (processQuestionCounts[normalizedKey] || 0) + p._count.id;
         }
       });
     } else {
@@ -49,11 +51,23 @@ export async function GET() {
         orderBy: { createdAt: "desc" },
       });
 
-      // Fetch question count for their specific process
-      const count = await db.mcq.count({
-        where: { process: requester.process }
+      // Fetch question count for their specific process (case-insensitive and space-insensitive)
+      // Since we can't easily do a normalized count in a single Prisma call without raw SQL,
+      // we'll fetch all counts and sum them.
+      const allCounts = await db.mcq.groupBy({
+        by: ['process'],
+        _count: { id: true }
       });
-      processQuestionCounts[requester.process] = count;
+
+      const normalizedRequesterProcess = requester.process.toUpperCase().replace(/\s+/g, '');
+      let totalCount = 0;
+      allCounts.forEach(p => {
+        if (p.process && p.process.toUpperCase().replace(/\s+/g, '') === normalizedRequesterProcess) {
+          totalCount += p._count.id;
+        }
+      });
+      
+      processQuestionCounts[normalizedRequesterProcess] = totalCount;
     }
 
     return NextResponse.json({ users, processQuestionCounts });

@@ -244,7 +244,7 @@ function AdminPage() {
                   </TableCell>
                   <TableCell>
                     <Badge variant="secondary" className="font-mono">
-                      {totalProcessQuestions[u.process] || 0}
+                      {totalProcessQuestions[u.process.toUpperCase().replace(/\s+/g, '')] || 0}
                     </Badge>
                   </TableCell>
                   <TableCell>{u.phone || 'N/A'}</TableCell>
