@@ -2,13 +2,10 @@ pipeline {
     agent any
 
     environment {
-        // Define your secrets here (must be added in Jenkins Credentials)
-        GCP_PROJECT_ID = 'vision-plus-project'
-        GCP_REGION = 'asia-south1'
-        DOCKER_IMAGE = "vision-plus-website:${env.BUILD_NUMBER}"
-        // Credentials IDs in Jenkins
-        GCP_KEY_CRED_ID = 'gcp-sa-key' 
-        DATABASE_URL = credentials('DATABASE_URL')
+        GCP_PROJECT_ID = 'hazel-freehold-483907-d6'
+        GCP_REGION = 'us-central1'
+        DOCKER_IMAGE = "vision-plus-website"
+        GCP_KEY_CRED_ID = 'gcp-sa-key'
     }
 
     stages {
@@ -20,63 +17,54 @@ pipeline {
 
         stage('GCP Auth') {
             steps {
-                withCredentials([file(credentialsId: "${GCP_KEY_CRED_ID}", variable: 'GCP_KEY_FILE')]) {
-                    sh "gcloud auth activate-service-account --key-file=${GCP_KEY_FILE}"
-                    sh "gcloud config set project ${GCP_PROJECT_ID}"
+                script {
+                    try {
+                        withCredentials([file(credentialsId: "${GCP_KEY_CRED_ID}", variable: 'GCP_KEY_FILE')]) {
+                            sh "gcloud auth activate-service-account --key-file=${GCP_KEY_FILE}"
+                            sh "gcloud config set project ${GCP_PROJECT_ID}"
+                        }
+                    } catch (e) {
+                        error "GCP Authentication failed. Please ensure credentials ID '${GCP_KEY_CRED_ID}' exists in Jenkins."
+                    }
                 }
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Install & Build') {
             steps {
                 sh 'npm ci'
-            }
-        }
-
-        stage('Prisma Generate') {
-            steps {
                 sh 'npx prisma generate'
-            }
-        }
-
-        stage('Build Next.js') {
-            steps {
                 sh 'npm run build'
             }
         }
 
         stage('Docker Build & Push') {
+            environment {
+                FULL_IMAGE_NAME = "gcr.io/${GCP_PROJECT_ID}/${DOCKER_IMAGE}:${env.BUILD_NUMBER}"
+            }
             steps {
                 script {
-                    // Build local image
-                    sh "docker build -t ${DOCKER_IMAGE} ."
-                    
-                    // Tag for Google Artifact Registry or Container Registry
-                    // Example for GCR:
-                    def gcrImage = "gcr.io/${GCP_PROJECT_ID}/${DOCKER_IMAGE}"
-                    sh "docker tag ${DOCKER_IMAGE} ${gcrImage}"
-                    
-                    // Configure docker for gcloud
+                    sh "docker build -t ${FULL_IMAGE_NAME} ."
                     sh "gcloud auth configure-docker --quiet"
-                    sh "docker push ${gcrImage}"
-                    
-                    env.FINAL_IMAGE = gcrImage
+                    sh "docker push ${FULL_IMAGE_NAME}"
                 }
             }
         }
 
         stage('Deploy to GCP') {
+            environment {
+                FULL_IMAGE_NAME = "gcr.io/${GCP_PROJECT_ID}/${DOCKER_IMAGE}:${env.BUILD_NUMBER}"
+                DATABASE_URL = credentials('DATABASE_URL')
+            }
             steps {
-                script {
-                    sh """
-                    gcloud run deploy vision-plus-website \
-                        --image ${env.FINAL_IMAGE} \
-                        --region ${GCP_REGION} \
-                        --platform managed \
-                        --allow-unauthenticated \
-                        --set-env-vars "DATABASE_URL=${DATABASE_URL},NODE_ENV=production"
-                    """
-                }
+                sh """
+                gcloud run deploy vision-plus-website \
+                    --image ${FULL_IMAGE_NAME} \
+                    --region ${GCP_REGION} \
+                    --platform managed \
+                    --allow-unauthenticated \
+                    --set-env-vars "DATABASE_URL=${DATABASE_URL},NODE_ENV=production"
+                """
             }
         }
     }
