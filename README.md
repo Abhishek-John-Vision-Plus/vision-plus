@@ -155,4 +155,22 @@ Validation occurs on the backend during submission, cross-referencing the initia
 
 ---
 
-*Developed with ❤️ for Vision Plus Training Assessment.*
+## 🚀 Deployment (GCP Cloud Run)
+
+The project includes a production-ready CI/CD pipeline via GitHub Actions.
+
+### 🔐 Required GitHub Secrets
+To enable automatic deployment, add these to **Settings > Secrets and variables > Actions**:
+
+| Secret | Description | Where to find |
+| :--- | :--- | :--- |
+| `GCP_PROJECT_ID` | Your Google Cloud Project ID | GCP Console Dashboard |
+| `GCP_SA_KEY` | Service Account JSON Key | IAM > Service Accounts > Keys (needs Cloud Run Admin) |
+| `GCP_REGION` | Deployment Region | e.g., `asia-south1` |
+| `DATABASE_URL` | Production Postgres URL | From your DB provider (e.g., Neon, Supabase, Cloud SQL) |
+| `NEXTAUTH_SECRET` | Auth Encryption Key | Generate using `openssl rand -base64 32` |
+| `NEXTAUTH_URL` | App Public URL | Your Cloud Run Service URL (e.g., `https://app-xyz.a.run.app`) |
+
+---
+
+*Developed with ❤️ by Abhishek John Charan for Vision Plus Training Assessment.*
