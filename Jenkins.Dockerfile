@@ -20,6 +20,13 @@ RUN apt-get update && \
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
     apt-get install -y nodejs
 
+# Install Google Cloud SDK
+RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && \
+    curl https://packages.cloud.google.com/apt/doc/yum-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg add - && \
+    apt-get update -y && apt-get install google-cloud-sdk -y
+
+USER jenkins
+
 # Add jenkins user to docker group (optional, usually handled by mounting the socket)
 # RUN groupadd -g 999 docker && usermod -aG docker jenkins
 

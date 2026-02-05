@@ -173,4 +173,31 @@ To enable automatic deployment, add these to **Settings > Secrets and variables 
 
 ---
 
+## 🏗️ Jenkins CI/CD Setup
+
+To use the custom Jenkins pipeline:
+
+1.  **Build Jenkins Image**:
+    ```bash
+    docker build -t custom-jenkins -f Jenkins.Dockerfile .
+    ```
+2.  **Run Jenkins**:
+    ```bash
+    docker run -p 8080:8080 -p 50000:50000 -v jenkins_home:/var/jenkins_home -v /var/run/docker.sock:/var/run/docker.sock custom-jenkins
+    ```
+3.  **Configure GitHub Webhook**:
+    *   In Jenkins: Install **GitHub Integration Plugin**.
+    *   In GitHub: Go to **Settings > Webhooks > Add webhook**.
+    *   Payload URL: `http://your-jenkins-url:8080/github-webhook/`.
+    *   Content type: `application/json`.
+    *   Events: `Just the push event`.
+4.  **Configure Jenkins Credentials**:
+    *   Go to **Manage Jenkins > Credentials > System > Global credentials**.
+    *   Add **Secret text**:
+        *   ID: `DATABASE_URL`, Secret: `your-postgres-url`.
+    *   Add **Secret file**:
+        *   ID: `gcp-sa-key`, File: `your-gcp-service-account-json-key`.
+
+---
+
 *Developed with ❤️ by Abhishek John Charan for Vision Plus Training Assessment.*
