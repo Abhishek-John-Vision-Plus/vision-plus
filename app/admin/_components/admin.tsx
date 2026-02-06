@@ -124,18 +124,18 @@ function AdminPage() {
   const isSuperAdmin = user.role === 'SUPER_ADMIN'
 
   return (
-    <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8">
+    <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-5">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
             {isSuperAdmin ? <ShieldAlert className="text-red-500" /> : <Shield className="text-blue-500" />}
            {isSuperAdmin ? 'Super Admin Dashboard' : 'Admin Dashboard'}
           </h1>
-          {/* <p className="text-muted-foreground mt-1">
+          <p className="text-muted-foreground mt-1">
             {isSuperAdmin 
               ? 'Super Admin Access: Manage all users and roles across all processes.' 
               : `Admin Access: Manage users for the ${user.process} process.`}
-          </p> */}
+          </p>
          
 
         </div>
@@ -194,7 +194,7 @@ function AdminPage() {
                 <TableRow key={u.id}>
                   <TableCell className="font-medium">{index + 1}</TableCell>
                   <TableCell>{u.name}</TableCell>
-                  <TableCell className="max-w-[200px] truncate">{u.email}</TableCell>
+                  <TableCell className="">{u.email}</TableCell>
                   <TableCell>{u.empId}</TableCell>
                   <TableCell>
                     {isSuperAdmin ? (

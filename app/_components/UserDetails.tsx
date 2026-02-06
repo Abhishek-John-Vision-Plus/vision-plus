@@ -196,11 +196,11 @@ export const UserDetailsForm: React.FC<UserDetailsFormProps> = ({ onSubmit, onCa
             </div>
             <div className="space-y-2">
               <Label htmlFor="language" className="text-sm font-medium text-gray-700">Language Name</Label>
-              <Select value={language} onValueChange={setLanguage} required>
+              {/* <Select value={language || undefined} onValueChange={(v) => setLanguage(v)} required>
                 <SelectTrigger className="w-full border-gray-200 focus:ring-2 focus:ring-green-500">
                   <SelectValue placeholder="Select Language" />
                 </SelectTrigger>
-                <SelectContent className="z-[200]">
+                <SelectContent className="z-[300]" position="popper" sideOffset={5}>
                   <SelectItem value="English">English</SelectItem>
                   <SelectItem value="Hindi">Hindi</SelectItem>
                   <SelectItem value="Marathi">Marathi</SelectItem>
@@ -214,7 +214,36 @@ export const UserDetailsForm: React.FC<UserDetailsFormProps> = ({ onSubmit, onCa
                   <SelectItem value="Punjabi">Punjabi</SelectItem>
                   <SelectItem value="Assamese">Assamese</SelectItem>
                 </SelectContent>
-              </Select>
+              </Select> */}
+<Select
+  value={language || undefined}
+  onValueChange={setLanguage}
+  // modal={false}
+>
+  <SelectTrigger className="w-full border-gray-200 focus:ring-2 focus:ring-green-500">
+    <SelectValue placeholder="Select Language" />
+  </SelectTrigger>
+
+  <SelectContent
+    className="z-[9999] pointer-events-auto"
+    position="popper"
+    sideOffset={5}
+  >
+    <SelectItem value="English">English</SelectItem>
+    <SelectItem value="Hindi">Hindi</SelectItem>
+    <SelectItem value="Marathi">Marathi</SelectItem>
+    <SelectItem value="Gujarati">Gujarati</SelectItem>
+    <SelectItem value="Bengali">Bengali</SelectItem>
+    <SelectItem value="Tamil">Tamil</SelectItem>
+    <SelectItem value="Telugu">Telugu</SelectItem>
+    <SelectItem value="Kannada">Kannada</SelectItem>
+    <SelectItem value="Malayalam">Malayalam</SelectItem>
+    <SelectItem value="Odia">Odia</SelectItem>
+    <SelectItem value="Punjabi">Punjabi</SelectItem>
+    <SelectItem value="Assamese">Assamese</SelectItem>
+  </SelectContent>
+</Select>
+
             </div>
             <div className="space-y-2">
               <Label htmlFor="dob" className="text-sm font-medium text-gray-700">Date of Birth</Label>
@@ -226,16 +255,26 @@ export const UserDetailsForm: React.FC<UserDetailsFormProps> = ({ onSubmit, onCa
             </div>
             <div className="space-y-2">
               <Label htmlFor="gender" className="text-sm font-medium text-gray-700">Gender</Label>
-              <Select value={gender} onValueChange={setGender} required>
-                <SelectTrigger className="w-full border-gray-200 focus:ring-2 focus:ring-green-500">
-                  <SelectValue placeholder="Select Gender" />
-                </SelectTrigger>
-                <SelectContent className="z-[200]">
-                  <SelectItem value="male">Male</SelectItem>
-                  <SelectItem value="female">Female</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
+              <Select
+  value={gender || undefined}
+  onValueChange={setGender}
+  // modal={false}
+>
+  <SelectTrigger className="w-full border-gray-200 focus:ring-2 focus:ring-green-500">
+    <SelectValue placeholder="Select Gender" />
+  </SelectTrigger>
+
+  <SelectContent
+    className="z-[9999] pointer-events-auto"
+    position="popper"
+    sideOffset={5}
+  >
+    <SelectItem value="male">Male</SelectItem>
+    <SelectItem value="female">Female</SelectItem>
+    <SelectItem value="other">Other</SelectItem>
+  </SelectContent>
+</Select>
+
             </div>
             <div className="space-y-2">
               <Label className="text-sm font-medium text-gray-700">Process Allocated</Label>

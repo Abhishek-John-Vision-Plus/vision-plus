@@ -50,7 +50,7 @@ function Header() {
         { id: 3, name: 'Services', path: 'services' },
         { id: 4, name: 'Projects', path: 'projects' },
         { id: 5, name: 'Testimonials', path: 'testimonials' },
-        { id: 6, name: 'Contact Us', path: '/contact', type: 'link' },
+        { id: 6, name: 'Contact Us', path: '/contact' },
     ]
 
     const scrollToSection = (id: string, type?: string) => {

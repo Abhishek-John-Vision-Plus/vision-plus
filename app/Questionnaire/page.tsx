@@ -400,8 +400,15 @@ export default function QuestionnairePage() {
               disabled={loading || Object.keys(answers).length === 0}
               className="w-full md:w-auto min-w-[350px] h-20 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-3xl text-2xl shadow-2xl shadow-emerald-900/20 transition-all active:scale-95 disabled:opacity-50"
             >
-              {loading ? <Loader2 className="animate-spin mr-2" /> : "SUBMIT QUESTIONNAIRE"}
-            </Button>
+              {loading ? (
+                <>
+                  <Loader2 className="animate-spin mr-2" />
+                  Submitting...
+                </>
+              ) : (
+                "SUBMIT QUESTIONNAIRE"
+              )}
+              </Button>
           </div>
         </div>
       </main>

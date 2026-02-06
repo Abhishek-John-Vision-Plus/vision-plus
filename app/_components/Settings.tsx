@@ -92,11 +92,19 @@ export default function SettingComp() {
             <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="Select" />
             </SelectTrigger>
-            <SelectContent className='z-[10000]'>
+            <SelectContent className='z-[10000]' position="popper" sideOffset={5}>
               <SelectItem value="English">English</SelectItem>
               <SelectItem value="Hindi">Hindi</SelectItem>
               <SelectItem value="Marathi">Marathi</SelectItem>
               <SelectItem value="Gujarati">Gujarati</SelectItem>
+              <SelectItem value="Bengali">Bengali</SelectItem>
+              <SelectItem value="Tamil">Tamil</SelectItem>
+              <SelectItem value="Telugu">Telugu</SelectItem>
+              <SelectItem value="Kannada">Kannada</SelectItem>
+              <SelectItem value="Malayalam">Malayalam</SelectItem>
+              <SelectItem value="Odia">Odia</SelectItem>
+              <SelectItem value="Punjabi">Punjabi</SelectItem>
+              <SelectItem value="Assamese">Assamese</SelectItem>
             </SelectContent>
           </Select>
         </div>

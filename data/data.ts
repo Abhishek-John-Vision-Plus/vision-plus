@@ -338,8 +338,8 @@ export const Webdata = {
           "https://images.unsplash.com/photo-1581579438747-1dc8d17bbce4",
         banner:
           "https://images.unsplash.com/photo-1607746882042-944635dfe10e",
-        extra1: "https://images.unsplash.com/photo-1576091160550-2173dad99a01",
-        extra2: "https://images.unsplash.com/photo-151630736542f-bea591f05011"
+        extra1: "https://images.unsplash.com/photo-1571053748382-141b7de59b88",
+        extra2: "https://images.unsplash.com/photo-1573497620053-ea5310f94a17"
       },
       links: {
         website: "https://elder-person.vercel.app/",
