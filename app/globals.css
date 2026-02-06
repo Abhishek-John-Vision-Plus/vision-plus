@@ -123,3 +123,28 @@
     @apply bg-background text-foreground;
   }
 }
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 2.5s linear infinite;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background-color: rgb(99 102 241); /* indigo-500 */
+  animation: bounce 1.2s infinite ease-in-out both;
+}
+
+.dot.delay-150 {
+  animation-delay: -0.15s;
+}
+
+.dot.delay-300 {
+  animation-delay: -0.3s;
+}

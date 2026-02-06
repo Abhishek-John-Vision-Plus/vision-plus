@@ -132,11 +132,17 @@ export async function POST(req: Request) {
       // Select up to maxDisplay
       const toDisplay = categoryQuestions.slice(0, rule.maxDisplay);
       
+      // Safety: ensure requiredAttempt is not greater than the number of questions we are actually serving
+      const effectiveRequiredAttempt = Math.min(
+        rule.requiredAttempt || rule.minAttempt,
+        toDisplay.length
+      );
+
       // Snapshot rule
       rulesSnapshot[rule.category] = {
-        minAttempt: rule.minAttempt,
+        minAttempt: Math.min(rule.minAttempt, toDisplay.length),
         maxDisplay: rule.maxDisplay,
-        requiredAttempt: rule.requiredAttempt || rule.minAttempt
+        requiredAttempt: effectiveRequiredAttempt
       };
 
       // Store these for the next step
