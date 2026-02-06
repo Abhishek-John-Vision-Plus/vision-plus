@@ -44,11 +44,11 @@ export default function QuestionnairePage() {
       setLoading(true);
       setError(null);
       try {
-        const processKey = Object.keys(Webdata.processes).find(
-          (key) => (Webdata.processes as any)[key].name === selectedProcess.name
-        ) || selectedProcess.name.toLowerCase();
-
-        const response = await fetch(`/api/process/${processKey}?userId=${user.id}`);
+        const response = await fetch(`/api/exam/start`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ process: selectedProcess.name })
+        });
         
         if (!response.ok) {
           const errorText = await response.text();
@@ -57,7 +57,6 @@ export default function QuestionnairePage() {
             const errorData = JSON.parse(errorText);
             errorMessage = errorData.message || errorData.error || errorMessage;
           } catch (e) {
-            // If it's not JSON, it's likely an HTML error page
             console.error("Non-JSON error response:", errorText);
             errorMessage = `Server Error: ${response.status} ${response.statusText}`;
           }
@@ -65,7 +64,8 @@ export default function QuestionnairePage() {
         }
 
         const data = await response.json();
-        setQuestions(data);
+        // The new API returns { questions: [...] }
+        setQuestions(data.questions || []);
       } catch (err: any) {
         console.error("Error fetching questions:", err);
         setError(err.message);

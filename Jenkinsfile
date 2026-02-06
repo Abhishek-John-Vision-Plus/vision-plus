@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        GCP_PROJECT_ID = 'hazel-freehold-483907-d6'
+        GCP_PROJECT_ID = 'vision-plus-project'
         GCP_REGION = 'us-central1'
         DOCKER_IMAGE = "vision-plus-website"
         GCP_KEY_CRED_ID = 'gcp-sa-key'
@@ -18,13 +18,16 @@ pipeline {
         stage('GCP Auth') {
             steps {
                 script {
+                    // Try to use the key file first, if it fails, check for GCE Metadata service
                     try {
                         withCredentials([file(credentialsId: "${GCP_KEY_CRED_ID}", variable: 'GCP_KEY_FILE')]) {
                             sh "gcloud auth activate-service-account --key-file=${GCP_KEY_FILE}"
                             sh "gcloud config set project ${GCP_PROJECT_ID}"
                         }
                     } catch (e) {
-                        error "GCP Authentication failed. Please ensure credentials ID '${GCP_KEY_CRED_ID}' exists in Jenkins."
+                        echo "Credential ID '${GCP_KEY_CRED_ID}' not found, attempting to use GCE Default Service Account..."
+                        // On a GCP VM, gcloud can automatically use the attached service account
+                        sh "gcloud config set project ${GCP_PROJECT_ID}"
                     }
                 }
             }
@@ -45,6 +48,7 @@ pipeline {
             steps {
                 script {
                     sh "docker build -t ${FULL_IMAGE_NAME} ."
+                    // Ensure docker is authenticated for GCR
                     sh "gcloud auth configure-docker --quiet"
                     sh "docker push ${FULL_IMAGE_NAME}"
                 }
@@ -57,6 +61,7 @@ pipeline {
                 DATABASE_URL = credentials('DATABASE_URL')
             }
             steps {
+                // If it's a VM, we might need to specify the account explicitly if multiple exist
                 sh """
                 gcloud run deploy vision-plus-website \
                     --image ${FULL_IMAGE_NAME} \

@@ -200,4 +200,25 @@ To use the custom Jenkins pipeline:
 
 ---
 
-*Developed with ❤️ by Abhishek John Charan for Vision Plus Training Assessment.*
+## ☁️ Running Jenkins on GCP VM (GCE)
+
+If you are hosting Jenkins on a Google Compute Engine VM, follow these steps to ensure it has permission to deploy:
+
+1.  **Assign Service Account**:
+    - Go to the **VM Instance Details** in GCP Console.
+    - Under **API and identity management**, ensure the VM has a Service Account attached with the following roles:
+        - `Cloud Run Admin`
+        - `Storage Admin` (for GCR/Artifact Registry)
+        - `Service Account User`
+2.  **Enable API Access Scopes**:
+    - When creating the VM (or stop it to edit), set **Access Scopes** to "Allow full access to all Cloud APIs".
+3.  **Firewall Rules**:
+    - Ensure your VM's firewall allows traffic on port `8080` (or whichever port Jenkins is using).
+4.  **Jenkins User Permissions**:
+    - If Jenkins is running directly on the VM (not in Docker), the `jenkins` user needs access to the `docker` group:
+      ```bash
+      sudo usermod -aG docker jenkins
+      sudo systemctl restart jenkins
+      ```
+
+---

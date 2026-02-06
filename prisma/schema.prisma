@@ -32,6 +32,7 @@ model TopicRule {
   minAttempt      Int      @default(0)
   maxDisplay      Int      @default(0)
   requiredAttempt Int?     // If set, must answer exactly this many
+  order           Int      @default(0) // Control the sequence of modules
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

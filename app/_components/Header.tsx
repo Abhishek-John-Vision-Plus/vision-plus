@@ -50,8 +50,7 @@ function Header() {
         { id: 3, name: 'Services', path: 'services' },
         { id: 4, name: 'Projects', path: 'projects' },
         { id: 5, name: 'Testimonials', path: 'testimonials' },
-        { id: 6, name: 'Questionnaire', path: '/Questionnaire', type: 'link' },
-        { id: 7, name: 'Contact', path: 'contact' },
+        { id: 6, name: 'Contact Us', path: '/contact', type: 'link' },
     ]
 
     const scrollToSection = (id: string, type?: string) => {
@@ -86,7 +85,7 @@ function Header() {
                                         alt='VISION PLUS'
                                         height={30}
                                         width={120}
-                                        className="object-contain"
+                                        className="object-contain w-auto h-auto"
                                         priority
                                     />
                                 </SheetTitle>
@@ -95,7 +94,7 @@ function Header() {
                                 {menu.map((item) => (
                                     <SheetClose key={item.id} asChild>
                                         <h2
-                                            onClick={() => scrollToSection(item.path, item.type)}
+                                            onClick={() => scrollToSection(item.path, (item as any).type)}
                                             className='text-lg font-bold uppercase tracking-widest cursor-pointer text-slate-700 hover:text-primary transition-colors pl-2 border-l-4 border-transparent hover:border-primary'
                                         >
                                             {item.name}
@@ -108,7 +107,7 @@ function Header() {
                 </div>
 
                 <Image
-                    className='cursor-pointer hover:scale-105 transition-transform hidden sm:block'
+                    className='cursor-pointer hover:scale-105 transition-transform hidden sm:block w-auto h-auto'
                     onClick={() => {
                         scrollToSection('home');
                     }}
@@ -120,7 +119,7 @@ function Header() {
                 />
                  {/* Mobile Logo (smaller) */}
                  <Image
-                    className='cursor-pointer hover:scale-105 transition-transform sm:hidden'
+                    className='cursor-pointer hover:scale-105 transition-transform sm:hidden w-auto h-auto'
                     onClick={() => {
                         scrollToSection('home');
                     }}
@@ -145,7 +144,7 @@ function Header() {
                 {menu.map((item) => (
                     <h2
                         key={item.id}
-                        onClick={() => scrollToSection(item.path, item.type)}
+                        onClick={() => scrollToSection(item.path, (item as any).type)}
                         className='text-sm font-bold uppercase tracking-widest cursor-pointer text-slate-700 hover:text-primary transition-colors'
                     >
                         {item.name}

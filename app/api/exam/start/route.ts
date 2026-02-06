@@ -29,11 +29,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Process name is required" }, { status: 400 });
     }
 
+    // 2. Fetch current rules for this process
+    const currentRules = await db.topicRule.findMany({
+      where: { 
+        process: { equals: process, mode: 'insensitive' }
+      },
+      orderBy: { order: 'asc' }
+    });
+
+    if (currentRules.length === 0) {
+      return NextResponse.json({ error: "No exam configuration found for this process" }, { status: 400 });
+    }
+
     // 1. Check for existing active session
     const activeSession = await db.examSession.findFirst({
       where: {
         userId,
-        process,
+        process: { equals: process, mode: 'insensitive' },
         status: "ACTIVE",
       },
       include: {
@@ -45,23 +57,47 @@ export async function POST(req: Request) {
     });
 
     if (activeSession) {
-      return NextResponse.json({ 
-        message: "Resuming active session", 
-        sessionId: activeSession.id,
-        questions: activeSession.questions.map(sq => ({
-          ...sq.mcq,
-          category: sq.category
-        }))
+      // Check if session rules match current rules (Real-time update)
+      const currentRulesSnapshot: Record<string, any> = {};
+      currentRules.forEach(r => {
+        currentRulesSnapshot[r.category] = {
+          minAttempt: r.minAttempt,
+          maxDisplay: r.maxDisplay,
+          requiredAttempt: r.requiredAttempt || r.minAttempt
+        };
       });
-    }
 
-    // 2. Fetch Topic Rules for this process
-    const rules = await db.topicRule.findMany({
-      where: { process }
-    });
+      const sessionRules = activeSession.rulesSnapshot as Record<string, any>;
+      const isRulesSame = JSON.stringify(currentRulesSnapshot) === JSON.stringify(sessionRules);
 
-    if (rules.length === 0) {
-      return NextResponse.json({ error: "No exam configuration found for this process" }, { status: 400 });
+      if (isRulesSame) {
+        return NextResponse.json({ 
+          message: "Resuming active session", 
+          sessionId: activeSession.id,
+          questions: activeSession.questions.map(sq => ({
+            id: sq.mcq.id,
+            question_text: sq.mcq.question,
+            type: sq.mcq.type,
+            options: typeof sq.mcq.options === 'string' 
+              ? (() => { try { return JSON.parse(sq.mcq.options) } catch { return null } })() 
+              : sq.mcq.options,
+            correct_option: sq.mcq.correctAnswer || sq.mcq.correctOption,
+            option_a: sq.mcq.option_a,
+            option_b: sq.mcq.option_b,
+            option_c: sq.mcq.option_c,
+            option_d: sq.mcq.option_d,
+            category: sq.category || "General",
+            module: sq.mcq.module || "General",
+            role: sq.mcq.role || "BOTH"
+          }))
+        });
+      } else {
+        // Rules changed! Invalidate old session to reflect changes in "real-time"
+        await db.examSession.update({
+          where: { id: activeSession.id },
+          data: { status: "ABANDONED" }
+        });
+      }
     }
 
     // 3. Fetch Questions and Randomize
@@ -71,9 +107,10 @@ export async function POST(req: Request) {
       }
     });
 
+    // Group questions by category (topic/module) - Normalize category names for matching
     const questionsByCategory: Record<string, any[]> = {};
     allQuestions.forEach(q => {
-      const cat = q.category || "General";
+      const cat = (q.category || "General").toLowerCase();
       if (!questionsByCategory[cat]) questionsByCategory[cat] = [];
       questionsByCategory[cat].push(q);
     });
@@ -81,8 +118,10 @@ export async function POST(req: Request) {
     const selectedQuestions: any[] = [];
     const rulesSnapshot: Record<string, any> = {};
 
-    rules.forEach(rule => {
-      const categoryQuestions = questionsByCategory[rule.category] || [];
+    // First, select questions within each category
+    currentRules.forEach(rule => {
+      const catKey = (rule.category || "General").toLowerCase();
+      const categoryQuestions = questionsByCategory[catKey] || [];
       
       // Shuffle category questions (Fisher-Yates)
       for (let i = categoryQuestions.length - 1; i > 0; i--) {
@@ -92,21 +131,32 @@ export async function POST(req: Request) {
 
       // Select up to maxDisplay
       const toDisplay = categoryQuestions.slice(0, rule.maxDisplay);
-      selectedQuestions.push(...toDisplay.map(q => ({
-        id: q.id,
-        category: rule.category
-      })));
-
+      
       // Snapshot rule
       rulesSnapshot[rule.category] = {
         minAttempt: rule.minAttempt,
         maxDisplay: rule.maxDisplay,
-        requiredAttempt: rule.requiredAttempt
+        requiredAttempt: rule.requiredAttempt || rule.minAttempt
       };
+
+      // Store these for the next step
+      selectedQuestions.push({
+        category: rule.category,
+        questions: toDisplay.map(q => ({
+          id: q.id,
+          category: rule.category
+        }))
+      });
+    });
+
+    // Flatten back into a single list while maintaining category groups (sequence is maintained from the rules loop)
+    const finalQuestionList: any[] = [];
+    selectedQuestions.forEach(module => {
+      finalQuestionList.push(...module.questions);
     });
 
     // 4. Create Session in Transaction
-    const session = await db.$transaction(async (tx) => {
+    const sessionData = await db.$transaction(async (tx) => {
       const newSession = await tx.examSession.create({
         data: {
           userId,
@@ -116,9 +166,9 @@ export async function POST(req: Request) {
         }
       });
 
-      // Create SessionQuestions with fixed order
+      // Create SessionQuestions with fixed order (grouped by category, but categories are randomized)
       await tx.sessionQuestion.createMany({
-        data: selectedQuestions.map((q, index) => ({
+        data: finalQuestionList.map((q, index) => ({
           sessionId: newSession.id,
           mcqId: q.id,
           category: q.category,
@@ -126,12 +176,38 @@ export async function POST(req: Request) {
         }))
       });
 
-      return newSession;
+      // Fetch the created questions to return to the UI
+      const sessionQuestions = await tx.sessionQuestion.findMany({
+        where: { sessionId: newSession.id },
+        orderBy: { order: 'asc' },
+        include: { mcq: true }
+      });
+
+      return {
+        sessionId: newSession.id,
+        questions: sessionQuestions.map(sq => ({
+          id: sq.mcq.id,
+          question_text: sq.mcq.question,
+          type: sq.mcq.type,
+          options: typeof sq.mcq.options === 'string' 
+            ? (() => { try { return JSON.parse(sq.mcq.options) } catch { return null } })() 
+            : sq.mcq.options,
+          correct_option: sq.mcq.correctAnswer || sq.mcq.correctOption,
+          option_a: sq.mcq.option_a,
+          option_b: sq.mcq.option_b,
+          option_c: sq.mcq.option_c,
+          option_d: sq.mcq.option_d,
+          category: sq.category || "General",
+          module: sq.mcq.module || "General",
+          role: sq.mcq.role || "BOTH"
+        }))
+      };
     });
 
     return NextResponse.json({ 
       message: "Exam session started", 
-      sessionId: session.id,
+      sessionId: sessionData.sessionId,
+      questions: sessionData.questions,
       rules: rulesSnapshot 
     });
 

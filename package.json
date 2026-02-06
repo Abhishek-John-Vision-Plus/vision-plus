@@ -11,6 +11,9 @@
     "generate": "npx prisma generate",
     "admin":"bun promote-user.js abhishek.charan@visionplusindia.in"
   },
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@prisma/adapter-pg": "^7.2.0",

@@ -5,9 +5,10 @@ import AdminPage from './_components/admin'
 import TestStats from './_components/testStats'
 import UploadMCQPage from './upload-mcq/page'
 import ManageQuestionsPage from './manage-questions/page'
+import TopicRulesManager from './_components/topicRulesManager'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAuth } from '@/context/AuthContext'
-import { Loader2, Users, FileText, Upload, Settings } from 'lucide-react'
+import { Loader2, Users, FileText, Upload, Settings, ListChecks } from 'lucide-react'
 
 function Page() {
   const { user, isLoading } = useAuth()
@@ -28,7 +29,7 @@ function Page() {
     <div className="container mx-auto py-6 px-4">
       <Tabs defaultValue="users" className="space-y-6">
         <div className="flex justify-center border-b pb-4">
-          <TabsList className="grid w-full max-w-3xl grid-cols-4">
+          <TabsList className="grid w-full max-w-4xl grid-cols-5">
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
               User Management
@@ -36,6 +37,10 @@ function Page() {
             <TabsTrigger value="stats" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
               Test Results
+            </TabsTrigger>
+            <TabsTrigger value="rules" className="flex items-center gap-2">
+              <ListChecks className="h-4 w-4" />
+              Topic Rules
             </TabsTrigger>
             <TabsTrigger value="upload" className="flex items-center gap-2">
               <Upload className="h-4 w-4" />
@@ -62,6 +67,10 @@ function Page() {
             </div>
             <TestStats />
           </div>
+        </TabsContent>
+
+        <TabsContent value="rules" className="border-none p-0 outline-none">
+          <TopicRulesManager />
         </TabsContent>
 
         <TabsContent value="upload" className="border-none p-0 outline-none">
