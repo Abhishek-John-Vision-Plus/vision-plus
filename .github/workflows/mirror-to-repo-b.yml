@@ -12,6 +12,8 @@ jobs:
     # Using a PAT via MIRROR_TOKEN; the job itself doesn't need elevated GITHUB_TOKEN perms
     permissions:
       contents: read
+    env:
+      TARGET_URL: ${{ secrets.MIRROR_TARGET_URL }}
 
     steps:
       - name: Checkout source repository
@@ -26,10 +28,13 @@ jobs:
 
           # Ensure fresh remote
           git remote remove mirror || true
-          git remote add mirror https://x-access-token:${{ secrets.MIRROR_TOKEN }}@github.com/Abhishek-John-Vision-Plus/vision-plus.git
+          # TARGET_URL must be like: github.com/<OWNER>/<REPO>.git
+          if [ -z "${TARGET_URL}" ]; then
+            echo "ERROR: secrets.MIRROR_TARGET_URL is not set"; exit 1;
+          fi
+          git remote add mirror https://x-access-token:${{ secrets.MIRROR_TOKEN }}@${TARGET_URL}
 
           # Mirror ALL refs (branches, tags, notes). This overwrites target to match source.
-          git fetch --all --prune
           git push mirror --mirror
           # If you prefer only main and tags:
           # git push mirror main --force
