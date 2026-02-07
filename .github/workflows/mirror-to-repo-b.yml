@@ -1,0 +1,25 @@
+name: Mirror Repo A to Repo B
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo A
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push to Repo B
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+
+          git remote add mirror https://x-access-token:${{ secrets.MIRROR_TOKEN }}@github.com/Abhishek-John-Vision-Plus/vision-plus.git
+
+          git push mirror main --force
