@@ -1,9 +1,17 @@
 'use client';
 
-import { useAuth } from '@/context/AuthContext';
-import { User2, Calendar, Mail, Hash, Briefcase, Phone, User as UserIcon, Globe, Info } from 'lucide-react';
+import {
+  Mail,
+  Calendar,
+  Briefcase,
+  Phone,
+  User as UserIcon,
+  Globe,
+  Info,
+  Camera
+} from 'lucide-react';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 type UserProfileProps = {
   user: {
@@ -15,112 +23,155 @@ type UserProfileProps = {
     role: string;
     process: string;
     createdAt: string;
+    avatarUrl?: string;
   };
 };
 
 export default function UserProfile({ user }: UserProfileProps) {
   const [extraDetails, setExtraDetails] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [avatar, setAvatar] = useState(user.avatarUrl || '/profile/profile.avif');
+
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const fetchExtraDetails = async () => {
-      if (!user?.id) return;
-      setLoading(true);
-      try {
-        const response = await fetch(`/api/user-details?userId=${user.id}`);
-        if (response.ok) {
-          const data = await response.json();
-          setExtraDetails(data);
-        }
-      } catch (err) {
-        console.error('Failed to fetch extra user details:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (!user?.id) return;
+    setLoading(true);
 
-    fetchExtraDetails();
+    fetch(`/api/user-details?userId=${user.id}`)
+      .then(res => res.json())
+      .then(setExtraDetails)
+      .catch(console.error)
+      .finally(() => setLoading(false));
   }, [user?.id]);
 
-  if (!user) return null;
+  /* ----------------------------------
+     Handle Profile Image Upload
+  ---------------------------------- */
+  const handleImageChange = async (file: File) => {
+    const preview = URL.createObjectURL(file);
+    setAvatar(preview);
+
+    // TODO: Upload to backend (Cloudinary/S3)
+    // const formData = new FormData();
+    // formData.append('file', file);
+    // await fetch('/api/upload-avatar', { method: 'POST', body: formData });
+  };
 
   return (
-    <div className="max-w-md mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100">
-      {/* Header/Banner Area */}
-      <div className="h-32 bg-gradient-to-r from-indigo-600 to-violet-600 relative">
-        <div className="absolute -bottom-12 left-1/2 -translate-x-1/2">
-          <div className="relative">
-            <div className="w-24 h-24 rounded-full border-4 border-white shadow-xl overflow-hidden bg-white">
-              <Image
-                src={'/profile/profile.avif'}
-                alt="User Profile"
-                width={100}
-                height={100}
-                className="object-cover"
-              />
+    <div className="max-w-md mx-auto rounded-3xl overflow-hidden bg-white/80 backdrop-blur-xl border border-slate-200 shadow-xl">
+      {/* Header */}
+      <div className="relative h-36 bg-gradient-to-r from-indigo-600 via-purple-600 to-violet-600">
+        {/* Avatar */}
+        <div className="absolute -bottom-14 left-1/2 -translate-x-1/2">
+          <div
+            className="relative w-28 h-28 rounded-full border-4 border-white shadow-xl overflow-hidden group cursor-pointer"
+            onClick={() => fileRef.current?.click()}
+          >
+            <Image
+              src={avatar}
+              alt="Profile"
+              fill
+              className="object-cover"
+            />
+
+            {/* Overlay */}
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+              <Camera className="w-6 h-6 text-white" />
             </div>
-            <div className="absolute bottom-1 right-1 w-6 h-6 bg-emerald-500 border-2 border-white rounded-full"></div>
           </div>
+
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={(e) => e.target.files && handleImageChange(e.target.files[0])}
+          />
         </div>
       </div>
 
-      {/* User Info Section */}
-      <div className="pt-16 pb-8 px-6 text-center border-b border-slate-50">
-        <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+      {/* User Info */}
+      <div className="pt-20 px-6 text-center border-b">
+        <h2 className="text-2xl font-extrabold text-slate-900">
           {user.name}
         </h2>
-        <div className="flex items-center justify-center gap-2 mt-1">
-          <span className="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">
-            {user.role}
-          </span>
-          <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">
-            {user.empId}
-          </span>
+
+        <div className="flex justify-center gap-2 mt-2">
+          <Badge>{user.role}</Badge>
+          <Badge variant="muted">{user.empId}</Badge>
         </div>
       </div>
 
-      {/* Details Grid */}
-      <div className="p-6 space-y-4">
-        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Account Information</h3>
-        
-        <div className="grid grid-cols-1 gap-4">
-          <DetailItem icon={<Mail className="w-4 h-4" />} label="Email" value={user.email} />
-          <DetailItem icon={<Briefcase className="w-4 h-4" />} label="Process" value={user.process} />
-          <DetailItem icon={<Phone className="w-4 h-4" />} label="Phone" value={user.phone || extraDetails?.phoneNumber || 'Not provided'} />
-          
-          {/* Newly requested fields */}
-          <DetailItem icon={<UserIcon className="w-4 h-4" />} label="Gender" value={extraDetails?.gender || (loading ? 'Loading...' : 'Not specified')} />
-          <DetailItem icon={<Globe className="w-4 h-4" />} label="Language" value={extraDetails?.language || (loading ? 'Loading...' : 'Not specified')} />
-          
-          <DetailItem icon={<Calendar className="w-4 h-4" />} label="Member Since" value={new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} />
-        </div>
+      {/* Details */}
+      <div className="p-6 space-y-6">
+        <Section title="Account Information">
+          <Detail icon={<Mail />} label="Email" value={user.email} />
+          <Detail icon={<Briefcase />} label="Process" value={user.process} />
+          <Detail icon={<Phone />} label="Phone" value={user.phone || '—'} />
+          <Detail icon={<UserIcon />} label="Gender" value={extraDetails?.gender || '—'} />
+          <Detail icon={<Globe />} label="Language" value={extraDetails?.language || '—'} />
+          <Detail
+            icon={<Calendar />}
+            label="Member Since"
+            value={new Date(user.createdAt).toLocaleDateString('en-US', {
+              month: 'long',
+              year: 'numeric'
+            })}
+          />
+        </Section>
 
         {extraDetails && (
-          <>
-            <div className="h-px bg-slate-100 my-6"></div>
-            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Additional Details</h3>
-            <div className="grid grid-cols-1 gap-4">
-              <DetailItem icon={<Info className="w-4 h-4" />} label="Designation" value={extraDetails.designation} />
-              <DetailItem icon={<UserIcon className="w-4 h-4" />} label="Team Lead" value={extraDetails.teamLead} />
-            </div>
-          </>
+          <Section title="Additional Details">
+            <Detail icon={<Info />} label="Designation" value={extraDetails.designation} />
+            <Detail icon={<UserIcon />} label="Team Lead" value={extraDetails.teamLead} />
+          </Section>
         )}
       </div>
     </div>
   );
 }
 
-function DetailItem({ icon, label, value }: { icon: React.ReactNode, label: string, value: string }) {
+/* ---------------- Components ---------------- */
+
+function Section({ title, children }: any) {
   return (
-    <div className="flex items-center gap-4 p-3 rounded-2xl hover:bg-slate-50 transition-colors group">
-      <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
+    <div>
+      <h3 className="text-[11px] font-black tracking-widest text-slate-400 uppercase mb-4">
+        {title}
+      </h3>
+      <div className="space-y-3">{children}</div>
+    </div>
+  );
+}
+
+function Detail({ icon, label, value }: any) {
+  return (
+    <div className="flex items-center gap-4 p-3 rounded-2xl hover:bg-slate-50 transition">
+      <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
         {icon}
       </div>
-      <div className="flex flex-col">
-        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{label}</span>
-        <span className="text-sm font-bold text-slate-700">{value}</span>
+      <div>
+        <p className="text-[11px] font-semibold uppercase text-slate-400">
+          {label}
+        </p>
+        <p className="text-sm font-bold text-slate-700">
+          {value}
+        </p>
       </div>
     </div>
   );
 }
 
+function Badge({ children, variant = 'default' }: any) {
+  return (
+    <span
+      className={`px-3 py-1 rounded-full text-[10px] font-extrabold tracking-wider uppercase
+        ${variant === 'muted'
+          ? 'bg-slate-100 text-slate-500'
+          : 'bg-indigo-100 text-indigo-700'}`}
+    >
+      {children}
+    </span>
+  );
+}
