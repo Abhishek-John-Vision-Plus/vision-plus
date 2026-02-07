@@ -23,3 +23,5 @@ jobs:
           git remote add mirror https://x-access-token:${{ secrets.MIRROR_TOKEN }}@github.com/Abhishek-John-Vision-Plus/vision-plus.git
 
           git push mirror main --force
+// Add a comment to explain the force push
+// Force push is used to overwrite the history of the mirrored repository with the history of the source repository
