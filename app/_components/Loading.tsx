@@ -11,10 +11,10 @@ interface LoadingProps {
 export default function Loading({ message = "Loading...", fullScreen = true }: LoadingProps) {
   return (
     <div className={`flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm z-[9999] ${fullScreen ? 'fixed inset-0' : 'w-full py-12'}`}>
-      <div className="relative w-24 h-24 mb-4">
+      <div className="relative w-34 h-34 mb-4">
         {/* You can replace '/loading.gif' with your actual GIF path in the public folder */}
         <Image 
-          src="/loading.gif" 
+          src="/Loading.gif" 
           alt="Loading..." 
           fill
           className="object-contain"

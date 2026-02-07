@@ -11,7 +11,7 @@ import { UserDetailsForm } from './UserDetails'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 
-function Hero({ webData, style }: any) {
+function Hero({ webData, style, initialUserDetails }: any) {
   const { user } = useAuth();
   const router = useRouter()
   const [showDetailsForm, setShowDetailsForm] = useState(false)
@@ -53,6 +53,7 @@ function Hero({ webData, style }: any) {
               <UserDetailsForm 
                 onSubmit={handleFormSubmit}
                 onCancel={() => setShowDetailsForm(false)}
+                initialDetails={initialUserDetails}
               />
             </motion.div>
           )}

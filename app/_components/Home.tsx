@@ -13,7 +13,7 @@ import Footer from './Footer';
 import { motion, useScroll, useSpring, AnimatePresence } from 'framer-motion';
 import { ArrowUp } from 'lucide-react';
 
-function HomePage() {
+function HomePage({ initialUserDetails }: { initialUserDetails?: any }) {
   const { selectedProcess } = useProcess();
   const { user } = useAuth();
   const activeData = selectedProcess || Webdata.processes.visionPlus;
@@ -77,7 +77,7 @@ function HomePage() {
 
         {/* Hero Section with enhanced spacing */}
         <section id="home" className="relative z-10">
-          <Hero webData={activeData} />
+          <Hero webData={activeData} initialUserDetails={initialUserDetails} />
         </section>
 
         {/* About Section with fade-in animation */}

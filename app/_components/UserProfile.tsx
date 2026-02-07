@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
+import Loading from './Loading';
 
 type UserProfileProps = {
   user: {
@@ -25,17 +26,18 @@ type UserProfileProps = {
     createdAt: string;
     avatarUrl?: string;
   };
+  initialExtraDetails?: any;
 };
 
-export default function UserProfile({ user }: UserProfileProps) {
-  const [extraDetails, setExtraDetails] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
+export default function UserProfile({ user, initialExtraDetails }: UserProfileProps) {
+  const [extraDetails, setExtraDetails] = useState<any>(initialExtraDetails || null);
+  const [loading, setLoading] = useState(!initialExtraDetails);
   const [avatar, setAvatar] = useState(user.avatarUrl || '/profile/profile.avif');
 
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id || initialExtraDetails) return;
     setLoading(true);
 
     fetch(`/api/user-details?userId=${user.id}`)
@@ -43,7 +45,11 @@ export default function UserProfile({ user }: UserProfileProps) {
       .then(setExtraDetails)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [user?.id]);
+  }, [user?.id, initialExtraDetails]);
+
+  if (loading && !extraDetails) {
+    return <Loading message="Loading profile..." fullScreen={false} />;
+  }
 
   /* ----------------------------------
      Handle Profile Image Upload

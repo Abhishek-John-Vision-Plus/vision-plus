@@ -35,13 +35,19 @@ import UserProfile from './UserProfile';
 import SettingComp from './Settings';
 
 
-function Header() {
+interface HeaderProps {
+  serverUser?: any;
+  initialExtraDetails?: any;
+}
+
+function Header({ serverUser, initialExtraDetails }: HeaderProps) {
       const [open, setOpen] = useState(false);
       const [openSetting, setOpenSetting] = useState(false);
     const { selectedProcess, setSelectedProcess } = useProcess();
-    const { user, logout } = useAuth();
+    const { user: clientUser, logout } = useAuth();
     const router = useRouter();
 
+    const user = clientUser || serverUser;
     const userData = user || {};
     
     const menu = [
@@ -219,26 +225,28 @@ function Header() {
             </div>
 
             <Modal isOpen={open} onClose={() => setOpen(false)}>
-                <UserProfile user={user ? {
-                    name: user.name || '',
-                    email: user.email || '',
-                    empid: (user as any).empId || '',
-                    phone: (user as any).phone || '',
-                    role: (user as any).role || '',
-                    process: (user as any).process || '',
-                    
-                    createdAt: (user as any).createdAt || '',
-                } : {
-                    name: '',
-                    email: '',
-                    empid: '',
-                    phone: '',
-                    role: '',
-                    process: '',
-                   
-                    createdAt: '',
-                }} />
-                
+                <UserProfile 
+                    user={user ? {
+                        id: user.id || '',
+                        name: user.name || '',
+                        email: user.email || '',
+                        empId: user.empId || '',
+                        phone: user.phone || '',
+                        role: user.role || '',
+                        process: user.process || '',
+                        createdAt: user.createdAt || '',
+                    } : {
+                        id: '',
+                        name: '',
+                        email: '',
+                        empId: '',
+                        phone: '',
+                        role: '',
+                        process: '',
+                        createdAt: '',
+                    }} 
+                    initialExtraDetails={initialExtraDetails}
+                />
             </Modal>
             <Modal isOpen={openSetting} onClose={() => setOpenSetting(false)}>
                 <SettingComp />

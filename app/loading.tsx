@@ -1,7 +1,5 @@
-'use client'
-
-import Loading from "./_components/Loading"
+import Loading from "@/app/_components/Loading";
 
 export default function GlobalLoading() {
-  return <Loading message="Vision Plus" />
+  return <Loading message="Loading Vision Plus..." fullScreen={true} />;
 }

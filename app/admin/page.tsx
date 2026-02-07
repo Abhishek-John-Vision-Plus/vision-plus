@@ -1,28 +1,18 @@
-'use client'
-
-import React from 'react'
+import { getCurrentUser } from '@/lib/auth-server'
+import { redirect } from 'next/navigation'
 import AdminPage from './_components/admin'
 import TestStats from './_components/testStats'
 import UploadMCQPage from './upload-mcq/page'
 import ManageQuestionsPage from './manage-questions/page'
 import TopicRulesManager from './_components/topicRulesManager'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useAuth } from '@/context/AuthContext'
-import { Loader2, Users, FileText, Upload, Settings, ListChecks } from 'lucide-react'
+import { Users, FileText, Upload, Settings, ListChecks } from 'lucide-react'
 
-function Page() {
-  const { user, isLoading } = useAuth()
-
-  if (isLoading) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
-  }
+export default async function Page() {
+  const user = await getCurrentUser()
 
   if (!user || (user.role !== 'SUPER_ADMIN' && user.role !== 'ADMIN')) {
-    return null
+    redirect('/')
   }
 
   return (
@@ -85,4 +75,3 @@ function Page() {
   )
 }
 
-export default Page

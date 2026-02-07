@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Loader2, Save, RefreshCw } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import Loading from '@/app/_components/Loading'
 
 interface TopicRule {
   id?: string
@@ -143,9 +144,7 @@ export default function TopicRulesManager() {
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-10">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
+          <Loading message="Fetching topic rules..." fullScreen={false} />
         ) : selectedProcess ? (
           <div className="space-y-4">
             <div className="rounded-md border">

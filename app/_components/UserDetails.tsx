@@ -7,31 +7,34 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useAuth } from '@/context/AuthContext';
 import { useProcess } from '@/context/ProcessContext';
 import { Webdata } from '@/data/data';
+import { Examinfo } from './Examinfo';
 
 interface UserDetailsFormProps {
   onSubmit: (details: { firstName: string; lastName: string; phoneNumber: string; gender: string; state: string; city: string; designation: string; processAllocated: string; teamLead: string; language: string; }) => void;
   onCancel: () => void;
+  initialDetails?: any;
 }
 
-export const UserDetailsForm: React.FC<UserDetailsFormProps> = ({ onSubmit, onCancel }) => {
+export const UserDetailsForm: React.FC<UserDetailsFormProps> = ({ onSubmit, onCancel, initialDetails }) => {
   const { user } = useAuth();
   const { selectedProcess } = useProcess();
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [gender, setGender] = useState('');
-  const [state, setState] = useState('');
-  const [city, setCity] = useState('');
-  const [designation, setDesignation] = useState('');
-  const [processAllocated, setProcessAllocated] = useState('');
-  const [teamLead, setTeamLead] = useState('');
-  const [language, setLanguage] = useState('');
+  const [firstName, setFirstName] = useState(initialDetails?.firstName || '');
+  const [lastName, setLastName] = useState(initialDetails?.lastName || '');
+  const [phoneNumber, setPhoneNumber] = useState(initialDetails?.phoneNumber || '');
+  const [gender, setGender] = useState(initialDetails?.gender || '');
+  const [state, setState] = useState(initialDetails?.state || '');
+  const [city, setCity] = useState(initialDetails?.city || '');
+  const [designation, setDesignation] = useState(initialDetails?.designation || '');
+  const [processAllocated, setProcessAllocated] = useState(initialDetails?.processAllocated || '');
+  const [teamLead, setTeamLead] = useState(initialDetails?.teamLead || '');
+  const [language, setLanguage] = useState(initialDetails?.language || '');
   const [fullName, setFullName] = useState('');
-  const [empId, setEmpId] = useState('');
-  const [address, setAddress] = useState('');
-  const [dateOfBirth, setDateOfBirth] = useState('');
-  const [consent, setConsent] = useState<string>('');
+  const [empId, setEmpId] = useState(initialDetails?.empId || '');
+  const [address, setAddress] = useState(initialDetails?.address || '');
+  const [dateOfBirth, setDateOfBirth] = useState(initialDetails?.dateOfBirth || '');
+  const [consent, setConsent] = useState<string>(initialDetails?.consent ? 'agree' : '');
   const [loading, setLoading] = useState(false);
+  const [showExaminfo, setShowExaminfo] = useState(false);
 
   useEffect(() => {
     // Disable scrolling on body when component mounts
@@ -48,19 +51,21 @@ export const UserDetailsForm: React.FC<UserDetailsFormProps> = ({ onSubmit, onCa
       if (!user) return;
 
       setFullName(user.name || '');
-      setEmpId(user.empId || '');
+      if (!empId) setEmpId(user.empId || '');
       // Use selectedProcess name if available, otherwise fall back to user.process
-      setProcessAllocated(selectedProcess?.name || user.process || '');
-      setPhoneNumber(user.phone || '');
+      if (!processAllocated) setProcessAllocated(selectedProcess?.name || user.process || '');
+      if (!phoneNumber) setPhoneNumber(user.phone || '');
 
       // Split name for first/last name
-      if (user.name) {
+      if (user.name && !firstName) {
         const parts = user.name.trim().split(/\s+/);
         if (parts.length > 0) {
           setFirstName(parts[0]);
           setLastName(parts.length > 1 ? parts.slice(1).join(' ') : '');
         }
       }
+
+      if (initialDetails) return;
 
       try {
         const response = await fetch(`/api/user-details?userId=${user.id}`);
@@ -86,7 +91,7 @@ export const UserDetailsForm: React.FC<UserDetailsFormProps> = ({ onSubmit, onCa
     };
 
     fetchUserDetails();
-  }, [user, selectedProcess]);
+  }, [user, selectedProcess, initialDetails]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,7 +144,8 @@ export const UserDetailsForm: React.FC<UserDetailsFormProps> = ({ onSubmit, onCa
 
       const data = await response.json();
       console.log('User details saved:', data);
-      onSubmit({ firstName, lastName, phoneNumber, gender, state, city, designation, processAllocated, teamLead, language });
+      setShowExaminfo(true);
+      // onSubmit({ firstName, lastName, phoneNumber, gender, state, city, designation, processAllocated, teamLead, language });
     } catch (error: any) {
       console.error('Error saving user details:', error);
       alert(`Failed to save details: ${error.message}`);
@@ -149,12 +155,15 @@ export const UserDetailsForm: React.FC<UserDetailsFormProps> = ({ onSubmit, onCa
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6 md:p-8">
-        <h2 className="text-xl sm:text-2xl md:text-4xl font-extrabold text-center rounded-full px-4 sm:px-6 py-2 border-2 sm:border-4 border-green-300 text-green-600">Candidate Registration Form</h2>
-        <h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6 p-2 sm:p-3 text-center text-gray-800">Enter Your Details</h2>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      {showExaminfo ? (
+        <Examinfo />
+      ) : (
+        <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6 md:p-8">
+          <h2 className="text-xl sm:text-2xl md:text-4xl font-extrabold text-center rounded-full px-4 sm:px-6 py-2 border-2 sm:border-4 border-green-300 text-green-600">Candidate Registration Form</h2>
+          <h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6 p-2 sm:p-3 text-center text-gray-800">Enter Your Details</h2>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label htmlFor="fullName" className="text-sm font-medium text-gray-700">Full Name (from signup)</Label>
               <Input id="fullName" value={fullName || ''} disabled className="bg-gray-50 border-gray-200" />
@@ -391,6 +400,7 @@ export const UserDetailsForm: React.FC<UserDetailsFormProps> = ({ onSubmit, onCa
           </div>
         </form>
       </div>
+      )}
     </div>
   );
 };

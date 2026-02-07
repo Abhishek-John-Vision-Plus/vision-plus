@@ -25,6 +25,7 @@ import { Webdata } from '@/data/data'
 import { toast } from 'sonner'
 import { Shield, ShieldAlert, User as UserIcon, Loader2, Filter, Save as SaveIcon } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import Loading from '@/app/_components/Loading'
 
 interface UserData {
   id: string
@@ -110,11 +111,7 @@ function AdminPage() {
     : users.filter(u => u.process === filterProcess)
 
   if (authLoading || loading) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <Loading message="Loading administrative data..." fullScreen={true} />
   }
 
   if (!user || (user.role !== 'SUPER_ADMIN' && user.role !== 'ADMIN')) {

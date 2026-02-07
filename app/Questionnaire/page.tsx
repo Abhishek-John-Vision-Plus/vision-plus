@@ -214,8 +214,8 @@ export default function QuestionnairePage() {
     {/* <NotFound/> */}
   </div>;
 
-  if (loading && !questions.length) {
-    return <Loading message="Preparing Assessment..." />;
+  if (loading) {
+    return <Loading message={isSubmitted ? "Saving Results..." : "Preparing Assessment..."} />;
   }
   
   if (error) {

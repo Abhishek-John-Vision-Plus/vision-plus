@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Eye, CheckCircle2, XCircle as XCircleIcon, ScrollText } from 'lucide-react'
+import Loading from '@/app/_components/Loading'
 
 interface AnswerDetail {
   questionId: string
@@ -82,11 +83,7 @@ function TestStats() {
   }
 
   if (loading) {
-    return (
-      <div className="flex h-64 w-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <Loading message="Fetching assessment stats..." fullScreen={false} />
   }
 
   // Calculate summary stats
