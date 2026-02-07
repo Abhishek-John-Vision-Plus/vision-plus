@@ -258,8 +258,8 @@ export const UserDetailsForm: React.FC<UserDetailsFormProps> = ({ onSubmit, onCa
               <Select
   value={gender || undefined}
   onValueChange={setGender}
- //f
- 
+
+
 >
   <SelectTrigger className="w-full border-gray-200 focus:ring-2 focus:ring-green-500">
     <SelectValue placeholder="Select Gender" />
