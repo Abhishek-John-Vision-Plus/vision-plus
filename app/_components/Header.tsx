@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link';
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation';
@@ -160,12 +161,13 @@ function Header({ serverUser, initialExtraDetails }: HeaderProps) {
 
             <div className="flex items-center gap-3">
                {user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN' ? (
-                    <Button
-                        onClick={() => router.push('/admin')}
-                        title="Admin Dashboard"
-                    >
-                    <User2 className="w-4 h-4" />{user?.role === 'SUPER_ADMIN' ? 'Super Admin' : 'Admin'}
-                    </Button>
+                    <Link href="/admin">
+                        <Button
+                            title="Admin Dashboard"
+                        >
+                        <User2 className="w-4 h-4" />{user?.role === 'SUPER_ADMIN' ? 'Super Admin' : 'Admin'}
+                        </Button>
+                    </Link>
                 ):<p> </p>}
                 {user ? (
                     <DropdownMenu>

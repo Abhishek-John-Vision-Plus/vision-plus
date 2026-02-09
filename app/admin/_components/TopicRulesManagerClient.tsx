@@ -1,7 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
-import { useAuth } from '@/context/AuthContext'
+import React, { useEffect, useState, useCallback } from 'react'
 import { Webdata } from '@/data/data'
 import { toast } from 'sonner'
 import { 
@@ -35,45 +34,39 @@ interface TopicRule {
   order: number
 }
 
-export default function TopicRulesManager() {
-  const { user } = useAuth()
-  const [selectedProcess, setSelectedProcess] = useState<string>('')
-  const [rules, setRules] = useState<TopicRule[]>([])
+interface TopicRulesManagerClientProps {
+  initialRules: TopicRule[]
+  initialProcess: string
+  user: {
+    process: string
+  }
+}
+
+export default function TopicRulesManagerClient({ initialRules, initialProcess, user }: TopicRulesManagerClientProps) {
+  const [selectedProcess, setSelectedProcess] = useState<string>(initialProcess || user.process || '')
+  const [rules, setRules] = useState<TopicRule[]>(initialRules)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
 
   const processes = Object.keys(Webdata.processes)
 
-  useEffect(() => {
-    if (user?.process) {
-      setSelectedProcess(user.process)
-    }
-  }, [user])
-
-  useEffect(() => {
-    if (selectedProcess) {
-      fetchRules()
-    }
-  }, [selectedProcess])
-
-  const fetchRules = async () => {
+  const fetchRules = useCallback(async (processToFetch: string) => {
+    if (!processToFetch) return
     setLoading(true)
     try {
-      const res = await fetch(`/api/admin/topic-rules?process=${selectedProcess}`)
+      const res = await fetch(`/api/admin/topic-rules?process=${processToFetch}`)
       if (!res.ok) throw new Error('Failed to fetch rules')
       const data = await res.json()
       
-      // Get all unique categories for this process from questions
-      const questionsRes = await fetch(`/api/mcqs?process=${selectedProcess}`)
+      const questionsRes = await fetch(`/api/mcqs?process=${processToFetch}`)
       const questionsData = await questionsRes.json()
       const categories = Array.from(new Set(questionsData.mcqs.map((q: any) => q.category || 'General'))) as string[]
       
-      // Merge existing rules with potential new categories
       const existingRules = data.rules as TopicRule[]
       const mergedRules = categories.map(cat => {
         const existing = existingRules.find(r => r.category === cat)
         return existing || {
-          process: selectedProcess,
+          process: processToFetch,
           category: cat,
           minAttempt: 0,
           maxDisplay: 0,
@@ -82,7 +75,6 @@ export default function TopicRulesManager() {
         }
       })
       
-      // Sort by order initially
       mergedRules.sort((a, b) => (a.order || 0) - (b.order || 0))
       setRules(mergedRules)
     } catch (error) {
@@ -91,7 +83,13 @@ export default function TopicRulesManager() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    if (selectedProcess && selectedProcess !== initialProcess) {
+      fetchRules(selectedProcess)
+    }
+  }, [selectedProcess, initialProcess, fetchRules])
 
   const handleUpdateRule = (index: number, field: keyof TopicRule, value: any) => {
     const newRules = [...rules]
@@ -138,7 +136,7 @@ export default function TopicRulesManager() {
               ))}
             </SelectContent>
           </Select>
-          <Button variant="outline" size="icon" onClick={fetchRules} disabled={loading || !selectedProcess}>
+          <Button variant="outline" size="icon" onClick={() => fetchRules(selectedProcess)} disabled={loading || !selectedProcess}>
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
         </div>

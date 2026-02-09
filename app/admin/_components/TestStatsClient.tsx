@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useState, useCallback } from 'react'
 import { 
   Table, 
   TableBody, 
@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2, TrendingUp, CheckCircle, XCircle, Award } from 'lucide-react'
+import { TrendingUp, CheckCircle, Award, Eye, CheckCircle2, XCircle as XCircleIcon, ScrollText } from 'lucide-react'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { 
@@ -23,16 +23,7 @@ import {
   DialogFooter
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Eye, CheckCircle2, XCircle as XCircleIcon, ScrollText } from 'lucide-react'
 import Loading from '@/app/_components/Loading'
-
-interface AnswerDetail {
-  questionId: string
-  question: string
-  selectedAnswer: string
-  correctAnswer: string
-  isCorrect: boolean
-}
 
 interface TestResult {
   id: string
@@ -52,17 +43,17 @@ interface TestResult {
   }
 }
 
-function TestStats() {
-  const [results, setResults] = useState<TestResult[]>([])
-  const [loading, setLoading] = useState(true)
+interface TestStatsClientProps {
+  initialResults: TestResult[]
+}
+
+export default function TestStatsClient({ initialResults }: TestStatsClientProps) {
+  const [results, setResults] = useState<TestResult[]>(initialResults)
+  const [loading, setLoading] = useState(false)
   const [selectedResult, setSelectedResult] = useState<TestResult | null>(null)
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
 
-  useEffect(() => {
-    fetchResults()
-  }, [])
-
-  const fetchResults = async () => {
+  const fetchResults = useCallback(async () => {
     setLoading(true)
     try {
       const res = await fetch('/api/admin/test-results')
@@ -75,7 +66,7 @@ function TestStats() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   const handleViewDetails = (result: TestResult) => {
     setSelectedResult(result)
@@ -83,7 +74,7 @@ function TestStats() {
   }
 
   if (loading) {
-    return <Loading message="Fetching assessment stats..." fullScreen={false} />
+    return <Loading message="Refreshing assessment stats..." fullScreen={false} />
   }
 
   // Calculate summary stats
@@ -269,5 +260,3 @@ function TestStats() {
     </div>
   )
 }
-
-export default TestStats

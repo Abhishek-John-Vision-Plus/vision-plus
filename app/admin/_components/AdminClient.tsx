@@ -1,8 +1,7 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { HeaderTitle } from '@/data/admin'
-import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import { 
   Table, 
@@ -23,7 +22,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Webdata } from '@/data/data'
 import { toast } from 'sonner'
-import { Shield, ShieldAlert, User as UserIcon, Loader2, Filter, Save as SaveIcon } from 'lucide-react'
+import { Shield, ShieldAlert, Loader2, Filter, Save as SaveIcon } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import Loading from '@/app/_components/Loading'
 
@@ -38,29 +37,35 @@ interface UserData {
   questionCount: number
 }
 
-function AdminPage() {
-  const { user, isLoading: authLoading } = useAuth()
+interface AdminClientProps {
+  initialUsers: UserData[]
+  initialProcessQuestionCounts: Record<string, number>
+  user: {
+    id: string
+    name: string
+    role: string
+    process: string
+  }
+}
+
+export default function AdminClient({ initialUsers, initialProcessQuestionCounts, user }: AdminClientProps) {
   const router = useRouter()
-  const [users, setUsers] = useState<UserData[]>([])
-  const [totalProcessQuestions, setTotalProcessQuestions] = useState<Record<string, number>>({})
-  const [loading, setLoading] = useState(true)
+  const [users, setUsers] = useState<UserData[]>(initialUsers)
+  const [totalProcessQuestions, setTotalProcessQuestions] = useState<Record<string, number>>(initialProcessQuestionCounts)
+  const [loading, setLoading] = useState(false)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [filterProcess, setFilterProcess] = useState<string>('all')
-  const [tempQuestionCounts, setTempQuestionCounts] = useState<Record<string, number>>({})
+  const [tempQuestionCounts, setTempQuestionCounts] = useState<Record<string, number>>(() => {
+    const counts: Record<string, number> = {}
+    initialUsers.forEach((u: UserData) => {
+      counts[u.id] = u.questionCount
+    })
+    return counts
+  })
 
   const processes = Object.keys(Webdata.processes)
 
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user || (user.role !== 'SUPER_ADMIN' && user.role !== 'ADMIN')) {
-        router.push('/')
-        return
-      }
-      fetchUsers()
-    }
-  }, [user, authLoading, router])
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true)
     try {
       const res = await fetch('/api/admin/users')
@@ -69,7 +74,6 @@ function AdminPage() {
       setUsers(data.users)
       setTotalProcessQuestions(data.processQuestionCounts || {})
       
-      // Initialize temp counts
       const counts: Record<string, number> = {}
       data.users.forEach((u: UserData) => {
         counts[u.id] = u.questionCount
@@ -81,7 +85,7 @@ function AdminPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   const handleUpdateUser = async (targetUserId: string, updates: { role?: string, process?: string, questionCount?: number }) => {
     setUpdatingId(targetUserId)
@@ -110,12 +114,8 @@ function AdminPage() {
     ? users 
     : users.filter(u => u.process === filterProcess)
 
-  if (authLoading || loading) {
-    return <Loading message="Loading administrative data..." fullScreen={true} />
-  }
-
-  if (!user || (user.role !== 'SUPER_ADMIN' && user.role !== 'ADMIN')) {
-    return null // Will redirect in useEffect
+  if (loading) {
+    return <Loading message="Refreshing administrative data..." fullScreen={true} />
   }
 
   const isSuperAdmin = user.role === 'SUPER_ADMIN'
@@ -133,17 +133,17 @@ function AdminPage() {
               ? 'Super Admin Access: Manage all users and roles across all processes.' 
               : `Admin Access: Manage users for the ${user.process} process.`}
           </p>
-         
-
         </div>
-        <div> <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
-          Welcome, <p className='text-xl'>{user.name}</p>
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          {isSuperAdmin 
-            ? ' Manage all users and roles across all processes.' 
-            : ` Manage users for the  ${user.process.toUpperCase()} process.`}
-        </p></div>
+        <div> 
+          <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
+            Welcome, <span className='text-xl font-bold'>{user.name}</span>
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            {isSuperAdmin 
+              ? ' Manage all users and roles across all processes.' 
+              : ` Manage users for the  ${user.process.toUpperCase()} process.`}
+          </p>
+        </div>
         
         {isSuperAdmin && (
           <div className="flex items-center gap-2 w-full md:w-auto">
@@ -182,7 +182,7 @@ function AdminPage() {
           <TableBody>
             {filteredUsers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={isSuperAdmin ? 9 : 8} className="h-24 text-center">
+                <TableCell colSpan={isSuperAdmin ? 10 : 9} className="h-24 text-center">
                   No users found.
                 </TableCell>
               </TableRow>
@@ -281,5 +281,3 @@ function AdminPage() {
     </div>
   )
 }
-
-export default AdminPage
