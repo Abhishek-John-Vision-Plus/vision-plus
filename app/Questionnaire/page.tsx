@@ -2,12 +2,12 @@
 
 import { useProcess } from "@/context/ProcessContext";
 import { useAuth } from "@/context/AuthContext";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, CheckCircle2, AlertCircle, HelpCircle } from "lucide-react";
+import { Loader2, CheckCircle2, AlertCircle, HelpCircle, Cloud, Clock, ChevronLeft, ChevronRight, Flag, Pause, Play } from "lucide-react";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import Unauthorized from "../unauthorized";
@@ -15,6 +15,8 @@ import Loading from "../_components/Loading";
 import NotFound from "../not-found";
 import ErrorDisplay from "../_components/ErrorDisplay";
 import Image from "next/image";
+import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
 
 interface Question {
   id: string;
@@ -42,6 +44,11 @@ export default function QuestionnairePage() {
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [flagged, setFlagged] = useState<Record<string, boolean>>({});
+  const QUESTION_TIME_LIMIT = 120;
+  const [timeRemaining, setTimeRemaining] = useState(QUESTION_TIME_LIMIT);
+  const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -217,6 +224,48 @@ export default function QuestionnairePage() {
     }
   };
 
+  useEffect(() => {
+    if (isSubmitted) return;
+    if (isPaused) return;
+    const timer = setInterval(() => {
+      setTimeRemaining((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [isPaused, isSubmitted]);
+
+  useEffect(() => {
+    setTimeRemaining(QUESTION_TIME_LIMIT);
+  }, [currentIndex]);
+
+  const answeredCount = useMemo(() => Object.keys(answers).length, [answers]);
+  const totalRequired = useMemo(() => {
+    const categories = Object.keys(rules);
+    return categories.reduce((sum, cat) => {
+      const hasQuestions = questions.some(q => q.category.toLowerCase() === cat.toLowerCase());
+      if (!hasQuestions) return sum;
+      const rule = rules[cat];
+      const needed = rule?.requiredAttempt ?? rule?.minAttempt ?? 0;
+      return sum + (typeof needed === "number" ? needed : 0);
+    }, 0);
+  }, [rules, questions]);
+
+  const togglePause = () => setIsPaused((p) => !p);
+  const handlePrevious = () => setCurrentIndex((idx) => Math.max(0, idx - 1));
+  const handleNext = () => setCurrentIndex((idx) => Math.min(questions.length - 1, idx + 1));
+  const handleFlag = () => {
+    const q = questions[currentIndex];
+    if (!q) return;
+    setFlagged((prev) => ({ ...prev, [q.id]: !prev[q.id] }));
+  };
+  const jumpToQuestion = (index: number) => setCurrentIndex(index);
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+  const timerPercentage = (timeRemaining / QUESTION_TIME_LIMIT) * 100;
+  const isTimeLow = timeRemaining <= 30;
+
   if (!user) return <div className="p-20 text-center">
     <Unauthorized />
     {/* <NotFound/> */}
@@ -272,141 +321,237 @@ export default function QuestionnairePage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      {/* Sticky Header */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100 px-4 py-4 shadow-sm">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex flex-col">
-            <h1 className="text-xl font-black text-slate-900 tracking-tight uppercase italic leading-none">
-              {selectedProcess?.name} Questionnaire
-            </h1>
-            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">
-              Assessment in progress
-            </p>
+    <div className="min-h-screen bg-background">
+      <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                <Cloud className="w-6 h-6 text-primary-foreground" />
+              </div>
+              <div className="hidden sm:block">
+                <span className="font-semibold text-foreground">{selectedProcess?.name} Questionnaire</span>
+                <p className="text-xs text-muted-foreground">
+                  {answeredCount}/{questions.length} answered
+                </p>
+                <p className="text-[10px] text-muted-foreground">
+                  Assigned {questions.length} • Required {totalRequired}
+                </p>
+              </div>
+            </div>
+
+            <div className={cn(
+              "flex items-center gap-2 px-4 py-2 rounded-full",
+              isPaused ? "bg-amber-500/20 text-amber-600" : isTimeLow ? "bg-red-500/20 text-red-600" : "bg-muted"
+            )}>
+              <Clock className={cn("w-5 h-5", isTimeLow && !isPaused && "animate-pulse")} />
+              <span className="font-mono font-bold text-lg">
+                {isPaused ? "PAUSED" : formatTime(timeRemaining)}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button 
+                variant={isPaused ? "default" : "outline"} 
+                size="sm" 
+                onClick={togglePause}
+                className="gap-1"
+              >
+                {isPaused ? (
+                  <>
+                    <Play className="w-4 h-4" />
+                    Resume
+                  </>
+                ) : (
+                  <>
+                    <Pause className="w-4 h-4" />
+                    Pause
+                  </>
+                )}
+              </Button>
+              <Button variant="secondary" size="sm" onClick={handleSubmit} disabled={loading || answeredCount === 0}>
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  "Submit"
+                )}
+              </Button>
+            </div>
           </div>
-          <div className="flex items-center gap-3 text-slate-500 bg-slate-50 px-4 py-2 rounded-full border border-slate-100">
-            <HelpCircle className="w-4 h-4 text-emerald-500" />
-            <span className="font-bold text-xs">
-              {Object.keys(answers).length} / {questions.length} answered
-            </span>
-          </div>
+          <Progress 
+            value={timerPercentage} 
+            className={cn("h-1 mt-2", isTimeLow && "[&>div]:bg-red-500")}
+          />
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 py-12 px-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="space-y-8">
-            {questions.map((q, index) => (
-              <Card key={q.id} id={`q-${index}`} className="border-none shadow-sm hover:shadow-md transition-all duration-300 rounded-3xl overflow-hidden">
-                <CardHeader className="pb-4 bg-white border-b border-slate-50">
-                  <div className="flex flex-wrap items-center gap-2 mb-4">
-                    <span className="bg-slate-900 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">
-                      Question {index + 1}
-                    </span>
-                    <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">
-                      {q.category || "General"}
-                    </span>
-                    {rules[q.category] && (
-                      <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">
-                        {getCategoryProgress(q.category).answered} / {
-                          rules[q.category].requiredAttempt !== null 
-                            ? `Exactly ${rules[q.category].requiredAttempt}` 
-                            : `Min ${rules[q.category].minAttempt}`
-                        } Answered
-                      </span>
+      <div className="container mx-auto px-4 py-6 flex flex-col lg:flex-row gap-6">
+        <aside className="lg:w-64 shrink-0">
+          <Card className="p-4">
+            <h3 className="font-semibold mb-3 text-sm">Question Navigator</h3>
+            <div className="grid grid-cols-10 lg:grid-cols-5 gap-1">
+              {questions.map((q, idx) => {
+                const answered = !!answers[q.id];
+                const isFlagged = !!flagged[q.id];
+                return (
+                  <button
+                    key={q.id}
+                    onClick={() => jumpToQuestion(idx)}
+                    className={cn(
+                      "w-8 h-8 text-xs font-medium rounded flex items-center justify-center transition-colors relative",
+                      idx === currentIndex && "ring-2 ring-primary",
+                      answered ? "bg-green-500/20 text-green-600" : isFlagged ? "bg-amber-500/20 text-amber-600" : "bg-muted text-muted-foreground"
                     )}
-                  </div>
-                  <CardTitle className="text-2xl font-bold text-slate-800 leading-tight">
-                    {q.question_text}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-8 bg-white">
-                  {q.type === "MCQ" || (!q.type && (q.option_a || q.options)) ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {(q.options || [q.option_a, q.option_b, q.option_c, q.option_d]).map((opt, i) => {
-                        if (!opt) return null;
-                        const key = String.fromCharCode(65 + i);
-                        const isSelected = answers[q.id] === key;
-                        return (
-                          <div
-                            key={key}
-                            onClick={() => handleAnswerChange(q.id, key, true)}
-                            className={`p-5 rounded-2xl border-2 transition-all duration-200 cursor-pointer flex items-center gap-4 ${
-                              isSelected
-                                ? "border-emerald-500 bg-emerald-50 shadow-md shadow-emerald-100"
-                                : "border-slate-100 bg-slate-50 hover:border-slate-200 hover:bg-white"
-                            }`}
-                          >
-                            <span className={`w-10 h-10 rounded-xl font-black flex items-center justify-center ${
-                              isSelected ? "bg-emerald-500 text-white" : "bg-white text-slate-400"
-                            }`}>
-                              {key}
-                            </span>
-                            <span className={`font-bold ${isSelected ? "text-emerald-700" : "text-slate-600"}`}>
-                              {opt}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : q.type === "CHECKBOX" ? (
-                    <div className="space-y-4">
-                      {q.options?.map((opt, i) => {
-                        const key = String.fromCharCode(65 + i);
-                        const isChecked = (answers[q.id] || []).includes(key);
-                        return (
-                          <div
-                            key={key}
-                            onClick={() => handleCheckboxChange(q.id, key, !isChecked)}
-                            className={`p-5 rounded-2xl border-2 transition-all duration-200 cursor-pointer flex items-center gap-4 ${
-                              isChecked
-                                ? "border-emerald-500 bg-emerald-50"
-                                : "border-slate-100 bg-slate-50 hover:border-slate-200"
-                            }`}
-                          >
-                            <Checkbox checked={isChecked} onCheckedChange={(checked) => handleCheckboxChange(q.id, key, !!checked)} />
-                            <span className={`font-bold ${isChecked ? "text-emerald-700" : "text-slate-600"}`}>
-                              {opt}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <Label className="text-slate-500 mb-2 block">Your Answer</Label>
-                      <Input
-                        placeholder="Type your answer here..."
-                        className="h-16 text-lg rounded-2xl border-2 border-slate-100 focus:border-emerald-500 transition-all"
-                        value={answers[q.id] || ""}
-                        onChange={(e) => handleAnswerChange(q.id, e.target.value)}
-                      />
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                    aria-label={`Question ${idx + 1}`}
+                  >
+                    {idx + 1}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-3">
+              <div className="w-3 h-3 rounded-full bg-green-500/20 border border-green-500"></div>
+              <span>Answered</span>
+              <div className="w-3 h-3 rounded-full bg-amber-500/20 border border-amber-500"></div>
+              <span>Flagged</span>
+              <div className="w-3 h-3 rounded-full bg-muted border border-muted-foreground"></div>
+              <span>Unanswered</span>
+            </div>
+          </Card>
+        </aside>
 
-          <div className="mt-16 flex flex-col items-center gap-6">
-            <Button
-              onClick={handleSubmit}
-              disabled={loading || Object.keys(answers).length === 0}
-              className="w-full md:w-auto min-w-[350px] h-20 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-3xl text-2xl shadow-2xl shadow-emerald-900/20 transition-all active:scale-95 disabled:opacity-50"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="animate-spin mr-2" />
-                  Submitting...
-                </>
-              ) : (
-                "SUBMIT QUESTIONNAIRE"
-              )}
-              </Button>
-          </div>
-        </div>
-      </main>
+        <main className="flex-1 max-w-3xl">
+          {questions[currentIndex] && (
+            <Card className="p-6 md:p-8">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <span className="text-lg font-bold">
+                    Question {currentIndex + 1}
+                  </span>
+                  <span className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground">
+                    {questions[currentIndex].category || "General"}
+                  </span>
+                </div>
+                <Button variant="ghost" size="sm" onClick={handleFlag} className="gap-1">
+                  <Flag className="w-4 h-4" />
+                  <span className="text-xs">
+                    {flagged[questions[currentIndex].id] ? "Unflag" : "Flag"}
+                  </span>
+                </Button>
+              </div>
+
+              <h3 className="text-xl font-bold mb-6">{questions[currentIndex].question_text}</h3>
+
+              <div className="space-y-3 mb-6">
+                {(
+                  questions[currentIndex].type === "MCQ" || 
+                  (!questions[currentIndex].type && (questions[currentIndex].option_a || questions[currentIndex].options))
+                ) ? (
+                  (questions[currentIndex].options || [
+                    questions[currentIndex].option_a, 
+                    questions[currentIndex].option_b, 
+                    questions[currentIndex].option_c, 
+                    questions[currentIndex].option_d
+                  ]).map((opt, i) => {
+                    if (!opt) return null;
+                    const key = String.fromCharCode(65 + i);
+                    const isSelected = answers[questions[currentIndex].id] === key;
+                    return (
+                      <Button
+                        key={key}
+                        variant="ghost"
+                        className={cn(
+                          "w-full justify-start text-left p-4 border border-muted rounded-lg",
+                          isSelected ? "border-primary bg-primary/5" : ""
+                        )}
+                        onClick={() => handleAnswerChange(questions[currentIndex].id, key, true)}
+                      >
+                        <span className="w-6 h-6 rounded-full bg-muted flex items-center justify-center mr-3">
+                          {key}
+                        </span>
+                        {opt}
+                      </Button>
+                    );
+                  })
+                ) : questions[currentIndex].type === "CHECKBOX" ? (
+                  questions[currentIndex].options?.map((opt, i) => {
+                    const key = String.fromCharCode(65 + i);
+                    const isChecked = (answers[questions[currentIndex].id] || []).includes(key);
+                    return (
+                      <Button
+                        key={key}
+                        variant="ghost"
+                        className={cn(
+                          "w-full justify-start text-left p-4 border border-muted rounded-lg",
+                          isChecked ? "border-primary bg-primary/5" : ""
+                        )}
+                        onClick={() => handleCheckboxChange(questions[currentIndex].id, key, !isChecked)}
+                      >
+                        <Checkbox 
+                          checked={isChecked} 
+                          onCheckedChange={(checked) => handleCheckboxChange(questions[currentIndex].id, key, !!checked)} 
+                          className="mr-3"
+                        />
+                        {opt}
+                      </Button>
+                    );
+                  })
+                ) : (
+                  <div className="space-y-4">
+                    <Label className="text-slate-500 mb-2 block">Your Answer</Label>
+                    <Input
+                      placeholder="Type your answer here..."
+                      className="h-16 text-lg rounded-2xl border-2 border-slate-100 focus:border-emerald-500 transition-all"
+                      value={answers[questions[currentIndex].id] || ""}
+                      onChange={(e) => handleAnswerChange(questions[currentIndex].id, e.target.value)}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-between">
+                <Button
+                  variant="outline"
+                  onClick={handlePrevious}
+                  disabled={currentIndex === 0}
+                  className="gap-2"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Previous
+                </Button>
+                <Button
+                  onClick={handleNext}
+                  disabled={currentIndex === questions.length - 1}
+                  className="gap-2"
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+
+              <div className="text-center mt-6">
+                <Button
+                  onClick={handleSubmit}
+                  disabled={loading || answeredCount === 0}
+                  className="min-w-[250px]"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      Submitting...
+                    </>
+                  ) : (
+                    "Submit Questionnaire"
+                  )}
+                </Button>
+              </div>
+            </Card>
+          )}
+        </main>
+      </div>
     </div>
   );
 }
