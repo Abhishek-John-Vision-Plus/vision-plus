@@ -13,6 +13,8 @@ import { Label } from "@/components/ui/label";
 import Unauthorized from "../unauthorized";
 import Loading from "../_components/Loading";
 import NotFound from "../not-found";
+import ErrorDisplay from "../_components/ErrorDisplay";
+import Image from "next/image";
 
 interface Question {
   id: string;
@@ -36,6 +38,7 @@ export default function QuestionnairePage() {
   const [rules, setRules] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorDigest, setErrorDigest] = useState<string | null>(null);
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -46,6 +49,7 @@ export default function QuestionnairePage() {
 
       setLoading(true);
       setError(null);
+      setErrorDigest(null);
       try {
         const response = await fetch(`/api/exam/start`, {
           method: 'POST',
@@ -56,14 +60,18 @@ export default function QuestionnairePage() {
         if (!response.ok) {
           const errorText = await response.text();
           let errorMessage = "Failed to fetch questions";
+          let digest = null;
           try {
             const errorData = JSON.parse(errorText);
             errorMessage = errorData.message || errorData.error || errorMessage;
+            digest = errorData.digest || null;
           } catch (e) {
             console.error("Non-JSON error response:", errorText);
             errorMessage = `Server Error: ${response.status} ${response.statusText}`;
           }
-          throw new Error(errorMessage);
+          setError(errorMessage);
+          setErrorDigest(digest);
+          return;
         }
 
         const data = await response.json();
@@ -219,25 +227,12 @@ export default function QuestionnairePage() {
   }
   
   if (error) {
-    if (error.includes("No questions added")) {
-      return (
-        <div className="min-h-screen bg-slate-50 py-12 px-4 flex items-center justify-center">
-          <Card className="max-w-md w-full text-center p-8 shadow-xl">
-            <div className="bg-slate-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <HelpCircle className="w-10 h-10 text-slate-400" />
-            </div>
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">No Questions Available</h2>
-            <p className="text-slate-500 mb-8">
-              There are currently no questions added for the <span className="font-bold text-slate-700">{selectedProcess?.name}</span> process.
-            </p>
-            <Button onClick={() => window.location.href = "/"} className="w-full">
-              Return to Dashboard
-            </Button>
-          </Card>
-        </div>
-      );
-    }
-    return <div className="p-20 text-center text-red-500">Error: {error}</div>;
+    return (
+      <ErrorDisplay 
+        error={error} 
+        digest={errorDigest || undefined}
+      />
+    );
   }
 
   if (isSubmitted && result) {

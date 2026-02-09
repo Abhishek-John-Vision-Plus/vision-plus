@@ -108,9 +108,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (e) {
       console.error("Logout API error:", e);
     }
+    
+    // Clear all user-related data from state and storage
     setUser(null);
     localStorage.removeItem('user');
     localStorage.removeItem('selectedProcess');
+    localStorage.removeItem('user_settings');
+    
+    // Perform a hard reload to the home page to clear all in-memory caches
+    window.location.href = '/';
   };
 
   return (

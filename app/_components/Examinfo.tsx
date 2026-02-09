@@ -55,27 +55,27 @@ export const Examinfo = () => {
   ];
 
   return (
-    <Card className="w-full max-w-2xl shadow-2xl border-none overflow-hidden bg-white/95 backdrop-blur-xl animate-in fade-in zoom-in duration-300">
+    <Card className="w-full max-w-2xl  shadow-2xl border-none overflow-hidden bg-white/95 backdrop-blur-xl animate-in fade-in zoom-in duration-300">
       <CardHeader 
-        className="text-white p-8 relative overflow-hidden"
+        className="text-white p-4 relative overflow-hidden"
         style={{ background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor}, ${primaryColor})` }}
       >
           {selectedProcess?.images?.logo && (
-            <div className="absolute top-4 right-4 w-16 h-16 opacity-20 pointer-events-none">
+            <div className="absolute  right-4 w-16 h-16 opacity-20 pointer-events-none">
               <img src={selectedProcess.images.logo} alt="" className="w-full h-full object-contain filter brightness-0 invert" />
             </div>
           )}
           <CardTitle className="text-3xl font-black text-center tracking-tight uppercase italic">
             {title}
           </CardTitle>
-          <p className="text-center mt-2 font-medium opacity-90">{subtitle}</p>
+          <p className="text-center  font-medium opacity-90">{subtitle}</p>
         </CardHeader>
         <CardContent className="p-8 space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-1 gap-1">
             {instructions.map((item, index) => (
               <div 
                 key={index} 
-                className="flex items-start gap-4 p-4 rounded-2xl border border-slate-100 hover:bg-white transition-all group shadow-sm hover:shadow-md"
+                className="flex items-start gap-4  rounded-2xl border border-slate-100 hover:bg-white transition-all group shadow-sm hover:shadow-md"
                 style={{ backgroundColor: accentColor }}
               >
                 <div className="mt-1 p-2 rounded-xl bg-white shadow-sm group-hover:scale-110 transition-transform">

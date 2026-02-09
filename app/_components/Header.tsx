@@ -208,7 +208,6 @@ function Header({ serverUser, initialExtraDetails }: HeaderProps) {
                                 className="cursor-pointer gap-2 text-destructive focus:text-destructive" 
                                 onClick={() => {
                                     logout();
-                                    router.push('/');
                                 }}
                             >
                                 <LogOut className="w-4 h-4" />
@@ -229,6 +228,7 @@ function Header({ serverUser, initialExtraDetails }: HeaderProps) {
             <Modal isOpen={open} onClose={() => setOpen(false)}>
                 <UserProfile 
                     user={user ? {
+                        // @ts-ignore
                         id: user.id || '',
                         name: user.name || '',
                         email: user.email || '',
