@@ -1,80 +1,49 @@
-name: Sync to Personal Repo
+# Just create/update any file
+echo "# Auto-sync enabled" >> README.md
+git add .
+git commit -m "Enable auto-sync"
+git push origin main
+```
 
-on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+### 5. Monitor the Workflow
 
-jobs:
-  sync:
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout source repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      
-      - name: Configure Git
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-      
-      - name: Sync to target repository
-        env:
-          TARGET_TOKEN: ${{ secrets.TARGET_REPO_TOKEN }}
-        run: |
-          # Verify token exists
-          if [ -z "${TARGET_TOKEN}" ]; then
-            echo "❌ ERROR: TARGET_REPO_TOKEN secret is not set"
-            echo "Please add a Classic Personal Access Token to repository secrets"
-            exit 1
-          fi
-          
-          # Target repository details
-          TARGET_OWNER="Abhishek-John-Vision-Plus"
-          TARGET_REPO="vision-plus"
-          
-          echo "🔄 Syncing to ${TARGET_OWNER}/${TARGET_REPO}..."
-          
-          # Add target repository as remote
-          git remote add target "https://x-access-token:${TARGET_TOKEN}@github.com/${TARGET_OWNER}/${TARGET_REPO}.git"
-          
-          # Show what will be pushed
-          echo ""
-          echo "📋 Latest 5 commits:"
-          git log --oneline -5
-          echo ""
-          
-          # Push main branch to target
-          echo "📤 Pushing main branch..."
-          if git push target main --force; then
-            echo "✅ Successfully pushed main branch"
-          else
-            echo "❌ Failed to push main branch"
-            echo ""
-            echo "Troubleshooting:"
-            echo "1. Verify TARGET_REPO_TOKEN is a Classic token (not fine-grained)"
-            echo "2. Token must have 'repo' scope checked"
-            echo "3. Verify repository exists: https://github.com/${TARGET_OWNER}/${TARGET_REPO}"
-            exit 1
-          fi
-          
-          # Push tags if any exist
-          echo ""
-          if git tag | grep -q .; then
-            echo "🏷️  Pushing tags..."
-            git push target --tags --force && echo "✅ Tags pushed successfully" || echo "⚠️  Some tags failed to push (non-critical)"
-          else
-            echo "ℹ️  No tags to push"
-          fi
-          
-          echo ""
-          echo "================================================"
-          echo "✅ Sync completed successfully!"
-          echo "================================================"
-          echo "Source: vision-limited/vision_plus_website"
-          echo "Target: ${TARGET_OWNER}/${TARGET_REPO}"
-          echo "Branch: main"
-          echo "================================================"
+1. Go to the **Actions** tab
+2. You should see a new workflow run
+3. Click on it to see the live logs
+4. Look for the success message:
+```
+================================================
+✅ Sync completed successfully!
+================================================
+```
+
+### 6. Verify the Sync
+
+After the workflow succeeds:
+1. Go to: **https://github.com/Abhishek-John-Vision-Plus/vision-plus**
+2. Check that your latest commits are there
+3. The commit history should match your source repo
+
+---
+
+## Expected Success Output
+```
+🔄 Syncing to Abhishek-John-Vision-Plus/vision-plus...
+
+📋 Latest 5 commits:
+abc1234 'your latest commit'
+def5678 'previous commit'
+...
+
+📤 Pushing main branch...
+✅ Successfully pushed main branch
+
+ℹ️  No tags to push
+
+================================================
+✅ Sync completed successfully!
+================================================
+Source: vision-limited/vision_plus_website
+Target: Abhishek-John-Vision-Plus/vision-plus
+Branch: main
+================================================
