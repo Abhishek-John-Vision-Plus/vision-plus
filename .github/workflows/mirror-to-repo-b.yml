@@ -1,49 +1,40 @@
-# Just create/update any file
-echo "# Auto-sync enabled" >> README.md
-git add .
-git commit -m "Enable auto-sync"
-git push origin main
-```
+name: Mirror to Repo B
 
-### 5. Monitor the Workflow
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
 
-1. Go to the **Actions** tab
-2. You should see a new workflow run
-3. Click on it to see the live logs
-4. Look for the success message:
-```
-================================================
-✅ Sync completed successfully!
-================================================
-```
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-### 6. Verify the Sync
-
-After the workflow succeeds:
-1. Go to: **https://github.com/Abhishek-John-Vision-Plus/vision-plus**
-2. Check that your latest commits are there
-3. The commit history should match your source repo
-
----
-
-## Expected Success Output
-```
-🔄 Syncing to Abhishek-John-Vision-Plus/vision-plus...
-
-📋 Latest 5 commits:
-abc1234 'your latest commit'
-def5678 'previous commit'
-...
-
-📤 Pushing main branch...
-✅ Successfully pushed main branch
-
-ℹ️  No tags to push
-
-================================================
-✅ Sync completed successfully!
-================================================
-Source: vision-limited/vision_plus_website
-Target: Abhishek-John-Vision-Plus/vision-plus
-Branch: main
-=================================================
+      - name: Mirror to Repo B
+        run: |
+          echo "🔄 Syncing to Abhishek-John-Vision-Plus/vision-plus..."
+          
+          # Configure Git
+          git config --global user.name "GitHub Action"
+          git config --global user.email "action@github.com"
+          
+          # Add the destination repository as a remote
+          # We use a secret for the Personal Access Token (PAT)
+          git remote add target https://${{ secrets.REPO_B_PAT }}@github.com/Abhishek-John-Vision-Plus/vision-plus.git
+          
+          echo "📋 Latest 5 commits:"
+          git log -n 5 --oneline
+          
+          echo "📤 Pushing main branch..."
+          git push target main --force
+          
+          echo "================================================"
+          echo "✅ Sync completed successfully!"
+          echo "================================================"
+          echo "Source: vision-limited/vision_plus_website"
+          echo "Target: Abhishek-John-Vision-Plus/vision-plus"
+          echo "Branch: main"
