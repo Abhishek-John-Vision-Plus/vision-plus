@@ -1,4 +1,4 @@
-name: Sync source repo to target (safe)
+name: Sync source repo to target
 
 on:
   push:
@@ -9,38 +9,40 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
-
-    # GITHUB_TOKEN is only used for checkout
+    
     permissions:
       contents: read
-
+    
     steps:
       - name: Checkout source repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
       - name: Configure Git
         run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "actions@github.com"
-
-      - name: Push main branch to target repository
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Push to target repository
         env:
-          MIRROR_TOKEN: ${{ secrets.MIRROR_TOKEN }}
+          TARGET_TOKEN: ${{ secrets.TARGET_REPO_TOKEN }}
         run: |
-          # Safety checks
-          if [ -z "${MIRROR_TOKEN}" ]; then
-            echo "ERROR: MIRROR_TOKEN secret is not set"
+          # Safety check
+          if [ -z "${TARGET_TOKEN}" ]; then
+            echo "ERROR: TARGET_REPO_TOKEN secret is not set"
             exit 1
           fi
-
+          
           # Add target repo as remote
-          git remote remove mirror || true
-          git remote add mirror https://x-access-token:${MIRROR_TOKEN}@github.com/Abhishek-John-Vision-Plus/vision-plus.git
-
-          # Push only main branch (SAFE SYNC)
-          git push mirror main --force
-
-          # Push tags (optional)
-          git push mirror --tags --force
+          git remote remove target 2>/dev/null || true
+          git remote add target https://x-access-token:${TARGET_TOKEN}@github.com/Abhishek-John-Vision-Plus/vision-plus.git
+          
+          # Push main branch to target
+          git push target main --force
+          
+          # Push all tags (optional, remove if not needed)
+          git push target --tags --force
+          
+          echo "✅ Successfully synced to target repository"
