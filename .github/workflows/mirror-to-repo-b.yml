@@ -25,72 +25,89 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
       
-      - name: Verify target repository access
+      - name: Push to target repository
         env:
           TARGET_TOKEN: ${{ secrets.TARGET_REPO_TOKEN }}
         run: |
-          # Safety check for token
+          # Safety check
           if [ -z "${TARGET_TOKEN}" ]; then
             echo "❌ ERROR: TARGET_REPO_TOKEN secret is not set"
-            echo "Please add TARGET_REPO_TOKEN to repository secrets"
             exit 1
           fi
           
           echo "✅ TARGET_REPO_TOKEN is set"
           
-          # Test repository access
-          echo "Testing access to target repository..."
-          TARGET_REPO="Abhishek-John-Vision-Plus/vision-plus"
+          # Target repository details
+          TARGET_OWNER="Abhishek-John-Vision-Plus"
+          TARGET_REPO="vision-plus"
           
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
-            -H "Authorization: token ${TARGET_TOKEN}" \
-            "https://api.github.com/repos/${TARGET_REPO}")
+          # Configure git credential helper to use the token
+          git config --global credential.helper store
+          echo "https://oauth2:${TARGET_TOKEN}@github.com" > ~/.git-credentials
           
-          if [ "$HTTP_CODE" = "200" ]; then
-            echo "✅ Successfully verified access to ${TARGET_REPO}"
-          elif [ "$HTTP_CODE" = "404" ]; then
-            echo "❌ ERROR: Repository not found or token lacks access"
-            echo "   Repository: ${TARGET_REPO}"
-            echo "   Please verify:"
-            echo "   1. Repository name is correct"
-            echo "   2. Token has 'repo' scope"
-            echo "   3. Token owner has access to the repository"
-            exit 1
-          else
-            echo "❌ ERROR: Unexpected response (HTTP ${HTTP_CODE})"
-            exit 1
-          fi
-      
-      - name: Push to target repository
-        env:
-          TARGET_TOKEN: ${{ secrets.TARGET_REPO_TOKEN }}
-        run: |
-          TARGET_REPO="Abhishek-John-Vision-Plus/vision-plus"
-          
-          # Add target repo as remote
+          # Alternative: use username in URL (try both methods)
+          # Method 1: Using oauth2 prefix
           git remote remove target 2>/dev/null || true
-          git remote add target "https://x-access-token:${TARGET_TOKEN}@github.com/${TARGET_REPO}.git"
+          git remote add target "https://oauth2:${TARGET_TOKEN}@github.com/${TARGET_OWNER}/${TARGET_REPO}.git"
           
-          # Show what we're about to push
-          echo "📤 Pushing to ${TARGET_REPO}..."
+          # Show what we're pushing
+          echo "📤 Pushing to ${TARGET_OWNER}/${TARGET_REPO}..."
           git log --oneline -5
           
-          # Push main branch to target
-          if git push target main --force; then
+          # Push with verbose output for debugging
+          echo "Attempting to push main branch..."
+          if git push target main --force --verbose; then
             echo "✅ Successfully pushed main branch"
           else
-            echo "❌ Failed to push main branch"
-            exit 1
+            echo "❌ Push failed. Trying alternative authentication method..."
+            
+            # Method 2: Try with x-access-token prefix
+            git remote remove target
+            git remote add target "https://x-access-token:${TARGET_TOKEN}@github.com/${TARGET_OWNER}/${TARGET_REPO}.git"
+            
+            if git push target main --force --verbose; then
+              echo "✅ Successfully pushed main branch (alternative method)"
+            else
+              echo "❌ Both methods failed"
+              exit 1
+            fi
           fi
           
-          # Push all tags (optional)
-          if git push target --tags --force; then
+          # Push tags
+          if git push target --tags --force 2>/dev/null; then
             echo "✅ Successfully pushed tags"
           else
-            echo "⚠️  Warning: Failed to push tags (may not exist)"
+            echo "⚠️  No tags to push or push failed"
           fi
+          
+          # Cleanup credentials
+          rm -f ~/.git-credentials
           
           echo ""
           echo "🎉 Successfully synced to target repository!"
           echo "   Source: vision-limited/vision_plus_website"
-          echo "   Target: ${TARGET_REPO}"
+          echo "   Target: ${TARGET_OWNER}/${TARGET_REPO}"
+```
+
+### Step 3: Verify Token Permissions
+
+Make sure your Personal Access Token has:
+
+**For Classic Token:**
+- ✅ `repo` (full control)
+  - repo:status
+  - repo_deployment  
+  - public_repo
+  - repo:invite
+  - security_events
+
+**For Fine-Grained Token:**
+- ✅ Contents: **Read and write**
+- ✅ Metadata: **Read-only**
+
+### Step 4: Double-Check Repository Name
+
+Verify the exact repository name at:
+```
+https://github.com/Abhishek-John-Vision-Plus/vision-plus
+//repo name is vision-plus
