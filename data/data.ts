@@ -21,8 +21,8 @@ export const Webdata = {
           "UIDAI | Unique Identification Authority of India"
       },
       style: {
-        primary_color: "#b91c1c",
-        secondary_color: "#1d4ed8",
+        primary_color: "#E27D60", // Pastel Terracotta
+        secondary_color: "#85DCB0", // Pastel Mint
         accent_color: "#fef2f2"
       },
       images: {
@@ -105,8 +105,8 @@ export const Webdata = {
         footer_text: "BSNL | Government of India"
       },
       style: {
-        primary_color: "#003399",
-        secondary_color: "#f97316",
+        primary_color: "#41B3A3", // Pastel Teal
+        secondary_color: "#E8A87C", // Pastel Peach
         accent_color: "#eff6ff"
       },
       images: {
@@ -179,8 +179,8 @@ export const Webdata = {
         footer_text: "Official BSNL KYC Portal"
       },
       style: {
-        primary_color: "#0369a1",
-        secondary_color: "#ea580c",
+        primary_color: "#C38D9E", // Pastel Mauve
+        secondary_color: "#E27D60", // Pastel Terracotta
         accent_color: "#f0f9ff"
       },
       images: {
@@ -244,8 +244,8 @@ export const Webdata = {
         footer_text: "Government of Meghalaya Initiative"
       },
       style: {
-        primary_color: "#ea580c",
-        secondary_color: "#15803d",
+        primary_color: "#E8A87C", // Pastel Peach
+        secondary_color: "#41B3A3", // Pastel Teal
         accent_color: "#fff7ed"
       },
       images: {
@@ -327,8 +327,8 @@ export const Webdata = {
           "Toll Free Number: 14567 | Ministry of Social Justice & Empowerment"
       },
       style: {
-        primary_color: "#15803d",
-        secondary_color: "#166534",
+        primary_color: "#85DCB0", // Pastel Mint
+        secondary_color: "#41B3A3", // Pastel Teal
         accent_color: "#f0fdf4"
       },
       images: {
@@ -410,8 +410,8 @@ export const Webdata = {
         footer_text: "GST Network | Government of India"
       },
       style: {
-        primary_color: "#312e81",
-        secondary_color: "#be123c",
+        primary_color: "#C38D9E", // Pastel Mauve
+        secondary_color: "#E27D60", // Pastel Terracotta
         accent_color: "#f5f3ff"
       },
       images: {
@@ -479,8 +479,8 @@ export const Webdata = {
         footer_text: "GST Appellate Tribunal | Government of India"
       },
       style: {
-        primary_color: "#1e3a8a",
-        secondary_color: "#475569",
+        primary_color: "#41B3A3", // Pastel Teal
+        secondary_color: "#C38D9E", // Pastel Mauve
         accent_color: "#f8fafc"
       },
       images: {
@@ -559,8 +559,8 @@ export const Webdata = {
           "MoHFW | Government of India"
       },
       style: {
-        primary_color: "#047857",
-        secondary_color: "#b45309",
+        primary_color: "#85DCB0", // Pastel Mint
+        secondary_color: "#E8A87C", // Pastel Peach
         accent_color: "#ecfdf5"
       },
       images: {
@@ -638,8 +638,8 @@ export const Webdata = {
         footer_text: "REC Limited | Ministry of Power"
       },
       style: {
-        primary_color: "#1e40af",
-        secondary_color: "#059669",
+        primary_color: "#41B3A3", // Pastel Teal
+        secondary_color: "#85DCB0", // Pastel Mint
         accent_color: "#eff6ff"
       },
       images: {
@@ -754,8 +754,8 @@ export const Webdata = {
         footer_text: "Vision Plus © 2026 – Excellence in Digital Transformation"
       },
       style: {
-        primary_color: "#0f172a",
-        secondary_color: "#3b82f6",
+        primary_color: "#C38D9E", // Pastel Mauve
+        secondary_color: "#41B3A3", // Pastel Teal
         accent_color: "#eff6ff"
       },
       images: {
