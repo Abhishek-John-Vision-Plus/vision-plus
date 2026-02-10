@@ -1,4 +1,4 @@
-name: Sync source repo to target
+name: Sync to Personal Repo
 
 on:
   push:
@@ -10,104 +10,54 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     
-    permissions:
-      contents: read
-    
     steps:
       - name: Checkout source repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Configure Git
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
       
-      - name: Push to target repository
+      - name: Sync to target repository
         env:
           TARGET_TOKEN: ${{ secrets.TARGET_REPO_TOKEN }}
         run: |
-          # Safety check
+          # Verify token exists
           if [ -z "${TARGET_TOKEN}" ]; then
-            echo "❌ ERROR: TARGET_REPO_TOKEN secret is not set"
+            echo "❌ ERROR: TARGET_REPO_TOKEN not set"
             exit 1
           fi
           
-          echo "✅ TARGET_REPO_TOKEN is set"
-          
-          # Target repository details
+          # Target repository
           TARGET_OWNER="Abhishek-John-Vision-Plus"
           TARGET_REPO="vision-plus"
           
-          # Configure git credential helper to use the token
-          git config --global credential.helper store
-          echo "https://oauth2:${TARGET_TOKEN}@github.com" > ~/.git-credentials
+          echo "🔄 Syncing to ${TARGET_OWNER}/${TARGET_REPO}..."
           
-          # Alternative: use username in URL (try both methods)
-          # Method 1: Using oauth2 prefix
-          git remote remove target 2>/dev/null || true
-          git remote add target "https://oauth2:${TARGET_TOKEN}@github.com/${TARGET_OWNER}/${TARGET_REPO}.git"
+          # Add target as remote
+          git remote add target "https://${TARGET_TOKEN}@github.com/${TARGET_OWNER}/${TARGET_REPO}.git"
           
-          # Show what we're pushing
-          echo "📤 Pushing to ${TARGET_OWNER}/${TARGET_REPO}..."
+          # Show what will be pushed
+          echo "📋 Latest commits:"
           git log --oneline -5
           
-          # Push with verbose output for debugging
-          echo "Attempting to push main branch..."
-          if git push target main --force --verbose; then
-            echo "✅ Successfully pushed main branch"
-          else
-            echo "❌ Push failed. Trying alternative authentication method..."
-            
-            # Method 2: Try with x-access-token prefix
-            git remote remove target
-            git remote add target "https://x-access-token:${TARGET_TOKEN}@github.com/${TARGET_OWNER}/${TARGET_REPO}.git"
-            
-            if git push target main --force --verbose; then
-              echo "✅ Successfully pushed main branch (alternative method)"
-            else
-              echo "❌ Both methods failed"
-              exit 1
-            fi
-          fi
+          # Push to target
+          echo "📤 Pushing to target..."
+          git push target main --force
           
-          # Push tags
-          if git push target --tags --force 2>/dev/null; then
-            echo "✅ Successfully pushed tags"
+          # Push tags if any exist
+          if git tag | grep -q .; then
+            echo "🏷️  Pushing tags..."
+            git push target --tags --force
           else
-            echo "⚠️  No tags to push or push failed"
+            echo "ℹ️  No tags to push"
           fi
-          
-          # Cleanup credentials
-          rm -f ~/.git-credentials
           
           echo ""
-          echo "🎉 Successfully synced to target repository!"
+          echo "✅ Successfully synced!"
           echo "   Source: vision-limited/vision_plus_website"
           echo "   Target: ${TARGET_OWNER}/${TARGET_REPO}"
-```
-
-### Step 3: Verify Token Permissions
-
-Make sure your Personal Access Token has:
-
-**For Classic Token:**
-- ✅ `repo` (full control)
-  - repo:status
-  - repo_deployment  
-  - public_repo
-  - repo:invite
-  - security_events
-
-**For Fine-Grained Token:**
-- ✅ Contents: **Read and write**
-- ✅ Metadata: **Read-only**
-
-### Step 4: Double-Check Repository Name
-
-Verify the exact repository name at:
-```
-https://github.com/Abhishek-John-Vision-Plus/vision-plus
-//repo name is vision-plus
+          echo "   Branch: main"
