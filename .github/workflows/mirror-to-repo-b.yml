@@ -25,24 +25,72 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
       
+      - name: Verify target repository access
+        env:
+          TARGET_TOKEN: ${{ secrets.TARGET_REPO_TOKEN }}
+        run: |
+          # Safety check for token
+          if [ -z "${TARGET_TOKEN}" ]; then
+            echo "❌ ERROR: TARGET_REPO_TOKEN secret is not set"
+            echo "Please add TARGET_REPO_TOKEN to repository secrets"
+            exit 1
+          fi
+          
+          echo "✅ TARGET_REPO_TOKEN is set"
+          
+          # Test repository access
+          echo "Testing access to target repository..."
+          TARGET_REPO="Abhishek-John-Vision-Plus/vision-plus"
+          
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: token ${TARGET_TOKEN}" \
+            "https://api.github.com/repos/${TARGET_REPO}")
+          
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ Successfully verified access to ${TARGET_REPO}"
+          elif [ "$HTTP_CODE" = "404" ]; then
+            echo "❌ ERROR: Repository not found or token lacks access"
+            echo "   Repository: ${TARGET_REPO}"
+            echo "   Please verify:"
+            echo "   1. Repository name is correct"
+            echo "   2. Token has 'repo' scope"
+            echo "   3. Token owner has access to the repository"
+            exit 1
+          else
+            echo "❌ ERROR: Unexpected response (HTTP ${HTTP_CODE})"
+            exit 1
+          fi
+      
       - name: Push to target repository
         env:
           TARGET_TOKEN: ${{ secrets.TARGET_REPO_TOKEN }}
         run: |
-          # Safety check
-          if [ -z "${TARGET_TOKEN}" ]; then
-            echo "ERROR: TARGET_REPO_TOKEN secret is not set"
-            exit 1
-          fi
+          TARGET_REPO="Abhishek-John-Vision-Plus/vision-plus"
           
           # Add target repo as remote
           git remote remove target 2>/dev/null || true
-          git remote add target https://x-access-token:${TARGET_TOKEN}@github.com/Abhishek-John-Vision-Plus/vision-plus.git
+          git remote add target "https://x-access-token:${TARGET_TOKEN}@github.com/${TARGET_REPO}.git"
+          
+          # Show what we're about to push
+          echo "📤 Pushing to ${TARGET_REPO}..."
+          git log --oneline -5
           
           # Push main branch to target
-          git push target main --force
+          if git push target main --force; then
+            echo "✅ Successfully pushed main branch"
+          else
+            echo "❌ Failed to push main branch"
+            exit 1
+          fi
           
-          # Push all tags (optional, remove if not needed)
-          git push target --tags --force
+          # Push all tags (optional)
+          if git push target --tags --force; then
+            echo "✅ Successfully pushed tags"
+          else
+            echo "⚠️  Warning: Failed to push tags (may not exist)"
+          fi
           
-          echo "✅ Successfully synced to target repository"
+          echo ""
+          echo "🎉 Successfully synced to target repository!"
+          echo "   Source: vision-limited/vision_plus_website"
+          echo "   Target: ${TARGET_REPO}"
