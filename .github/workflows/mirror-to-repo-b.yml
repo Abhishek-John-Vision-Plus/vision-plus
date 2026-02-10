@@ -21,7 +21,7 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
       
-      - name: Sync to target repository
+      - name: Verify token and test access
         env:
           TARGET_TOKEN: ${{ secrets.TARGET_REPO_TOKEN }}
         run: |
@@ -31,27 +31,73 @@ jobs:
             exit 1
           fi
           
-          # Target repository
+          echo "✅ Token is set"
+          
+          # Test API access
+          TARGET_OWNER="Abhishek-John-Vision-Plus"
+          TARGET_REPO="vision-plus"
+          
+          echo "Testing GitHub API access to ${TARGET_OWNER}/${TARGET_REPO}..."
+          
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -H "Authorization: Bearer ${TARGET_TOKEN}" \
+            "https://api.github.com/repos/${TARGET_OWNER}/${TARGET_REPO}")
+          
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ API access successful"
+          else
+            echo "❌ API access failed with HTTP $HTTP_CODE"
+            echo "Response: $BODY"
+            exit 1
+          fi
+      
+      - name: Sync to target repository
+        env:
+          TARGET_TOKEN: ${{ secrets.TARGET_REPO_TOKEN }}
+        run: |
           TARGET_OWNER="Abhishek-John-Vision-Plus"
           TARGET_REPO="vision-plus"
           
           echo "🔄 Syncing to ${TARGET_OWNER}/${TARGET_REPO}..."
           
-          # Add target as remote
-          git remote add target "https://${TARGET_TOKEN}@github.com/${TARGET_OWNER}/${TARGET_REPO}.git"
+          # Try different authentication methods
           
-          # Show what will be pushed
+          # Method 1: Standard token authentication
+          git remote add target "https://${TARGET_TOKEN}@github.com/${TARGET_OWNER}/${TARGET_REPO}.git" || true
+          
           echo "📋 Latest commits:"
           git log --oneline -5
           
-          # Push to target
-          echo "📤 Pushing to target..."
-          git push target main --force
+          echo "📤 Attempting push (Method 1: direct token)..."
+          if git push target main --force 2>&1; then
+            echo "✅ Push successful with Method 1"
+          else
+            echo "⚠️  Method 1 failed, trying Method 2..."
+            
+            # Method 2: x-access-token prefix
+            git remote remove target
+            git remote add target "https://x-access-token:${TARGET_TOKEN}@github.com/${TARGET_OWNER}/${TARGET_REPO}.git"
+            
+            echo "📤 Attempting push (Method 2: x-access-token)..."
+            if git push target main --force 2>&1; then
+              echo "✅ Push successful with Method 2"
+            else
+              echo "❌ Both authentication methods failed"
+              echo "Please check:"
+              echo "1. Token has 'Contents: Read and write' permission"
+              echo "2. Token is for the correct account (${TARGET_OWNER})"
+              echo "3. Repository name is correct (${TARGET_REPO})"
+              exit 1
+            fi
+          fi
           
           # Push tags if any exist
           if git tag | grep -q .; then
             echo "🏷️  Pushing tags..."
-            git push target --tags --force
+            git push target --tags --force 2>/dev/null || echo "⚠️  Tag push failed (non-critical)"
           else
             echo "ℹ️  No tags to push"
           fi
