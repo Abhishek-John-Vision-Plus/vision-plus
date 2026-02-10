@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, CheckCircle2, AlertCircle, HelpCircle, Cloud, Clock, ChevronLeft, ChevronRight, Flag, Pause, Play } from "lucide-react";
+import { Loader2, CheckCircle2, AlertCircle, HelpCircle, Cloud, Clock, ChevronLeft, ChevronRight, Flag, Pause, Play, LucideCheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import Unauthorized from "../unauthorized";
@@ -249,6 +249,38 @@ export default function QuestionnairePage() {
     }, 0);
   }, [rules, questions]);
 
+  const allRequirementsMet = useMemo(() => {
+    const categories = Object.keys(rules);
+    if (categories.length === 0) return answeredCount > 0;
+    
+    return categories.every(cat => {
+      const hasQuestions = questions.some(q => q.category.toLowerCase() === cat.toLowerCase());
+      if (!hasQuestions) return true; // No questions for this rule, skip
+      
+      const progress = getCategoryProgress(cat);
+      const target = progress.required ?? progress.min;
+      return progress.answered >= target;
+    });
+  }, [rules, questions, answers, getCategoryProgress, answeredCount]);
+
+  const questionsByCategory = useMemo(() => {
+    const groups: Record<string, { q: Question; originalIndex: number }[]> = {};
+    questions.forEach((q, index) => {
+      const category = q.category || "General";
+      if (!groups[category]) groups[category] = [];
+      groups[category].push({ q, originalIndex: index });
+    });
+    return groups;
+  }, [questions]);
+
+  const themeStyle = useMemo(() => {
+    if (!selectedProcess?.style) return {};
+    return {
+      "--primary": selectedProcess.style.primary_color,
+      "--primary-foreground": "#ffffff",
+    } as React.CSSProperties;
+  }, [selectedProcess]);
+
   const togglePause = () => setIsPaused((p) => !p);
   const handlePrevious = () => setCurrentIndex((idx) => Math.max(0, idx - 1));
   const handleNext = () => setCurrentIndex((idx) => Math.min(questions.length - 1, idx + 1));
@@ -321,13 +353,16 @@ export default function QuestionnairePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" style={themeStyle}>
       <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                <Cloud className="w-6 h-6 text-primary-foreground" />
+              <div 
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-white"
+                style={{ backgroundColor: selectedProcess?.style.primary_color }}
+              >
+                <LucideCheckCircle2 className="w-6 h-6" />
               </div>
               <div className="hidden sm:block">
                 <span className="font-semibold text-foreground">{selectedProcess?.name} Questionnaire</span>
@@ -356,6 +391,7 @@ export default function QuestionnairePage() {
                 size="sm" 
                 onClick={togglePause}
                 className="gap-1"
+                style={isPaused ? { backgroundColor: selectedProcess?.style.primary_color, color: 'white' } : {}}
               >
                 {isPaused ? (
                   <>
@@ -369,7 +405,17 @@ export default function QuestionnairePage() {
                   </>
                 )}
               </Button>
-              <Button variant="secondary" size="sm" onClick={handleSubmit} disabled={loading || answeredCount === 0}>
+              <Button 
+                variant="secondary" 
+                size="sm" 
+                onClick={handleSubmit} 
+                disabled={loading || !allRequirementsMet}
+                className={cn(
+                  "font-bold transition-all duration-300",
+                  allRequirementsMet ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20" : "opacity-50"
+                )}
+                title={!allRequirementsMet ? "Complete all topic requirements to submit" : "Submit Assessment"}
+              >
                 {loading ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -384,169 +430,310 @@ export default function QuestionnairePage() {
           <Progress 
             value={timerPercentage} 
             className={cn("h-1 mt-2", isTimeLow && "[&>div]:bg-red-500")}
+            style={{ "--primary": selectedProcess?.style.primary_color } as any}
           />
         </div>
       </header>
 
       <div className="container mx-auto px-4 py-6 flex flex-col lg:flex-row gap-6">
         <aside className="lg:w-64 shrink-0">
-          <Card className="p-4">
-            <h3 className="font-semibold mb-3 text-sm">Question Navigator</h3>
-            <div className="grid grid-cols-10 lg:grid-cols-5 gap-1">
-              {questions.map((q, idx) => {
-                const answered = !!answers[q.id];
-                const isFlagged = !!flagged[q.id];
+          <Card className="p-4 sticky top-24">
+            <div className="mb-6">
+              <h3 className="font-bold mb-1 text-sm uppercase tracking-wider text-slate-900">Progress Tracker</h3>
+              <p className="text-[10px] text-slate-500 font-medium">
+                Complete the requirements for each topic
+              </p>
+            </div>
+            
+            <div className="space-y-6 max-h-[calc(100vh-300px)] overflow-y-auto pr-2 scrollbar-thin">
+              {Object.entries(questionsByCategory).map(([category, items]) => {
+                const progress = getCategoryProgress(category);
+                const target = progress.required ?? progress.min;
+                const isMet = progress.answered >= target;
+
                 return (
-                  <button
-                    key={q.id}
-                    onClick={() => jumpToQuestion(idx)}
-                    className={cn(
-                      "w-8 h-8 text-xs font-medium rounded flex items-center justify-center transition-colors relative",
-                      idx === currentIndex && "ring-2 ring-primary",
-                      answered ? "bg-green-500/20 text-green-600" : isFlagged ? "bg-amber-500/20 text-amber-600" : "bg-muted text-muted-foreground"
-                    )}
-                    aria-label={`Question ${idx + 1}`}
-                  >
-                    {idx + 1}
-                  </button>
+                  <div key={category} className="space-y-2">
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500 truncate mr-2" title={category}>
+                          {category}
+                        </h4>
+                        <div className="flex items-center gap-1.5">
+                          <span className={cn(
+                            "text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1",
+                            isMet ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"
+                          )}>
+                            {isMet && <LucideCheckCircle2 className="w-2.5 h-2.5" />}
+                            {progress.answered}/{target}
+                          </span>
+                          <span className="text-[9px] font-bold text-slate-400">
+                            of {progress.total}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="h-1 w-full bg-slate-100 rounded-full overflow-hidden">
+                        <div 
+                          className={cn("h-full transition-all duration-500", isMet ? "bg-emerald-500" : "bg-slate-300")}
+                          style={{ width: `${Math.min((progress.answered / target) * 100, 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-5 gap-1.5">
+                      {items.map(({ q, originalIndex }) => {
+                        const answered = !!answers[q.id];
+                        const isFlagged = !!flagged[q.id];
+                        const isCurrent = originalIndex === currentIndex;
+                        
+                        return (
+                          <button
+                            key={q.id}
+                            onClick={() => jumpToQuestion(originalIndex)}
+                            className={cn(
+                              "w-8 h-8 text-[11px] font-bold rounded-lg flex items-center justify-center transition-all relative border-2",
+                              isCurrent 
+                                ? "border-slate-900 scale-110 z-10 shadow-sm" 
+                                : "border-transparent",
+                              answered 
+                                ? "bg-emerald-500 text-white" 
+                                : isFlagged 
+                                  ? "bg-amber-500 text-white" 
+                                  : "bg-slate-100 text-slate-400 hover:bg-slate-200"
+                            )}
+                            style={isCurrent && answered ? { borderColor: selectedProcess?.style.primary_color } : {}}
+                            aria-label={`Question ${originalIndex + 1}`}
+                          >
+                            {originalIndex + 1}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 );
               })}
             </div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-3">
-              <div className="w-3 h-3 rounded-full bg-green-500/20 border border-green-500"></div>
-              <span>Answered</span>
-              <div className="w-3 h-3 rounded-full bg-amber-500/20 border border-amber-500"></div>
-              <span>Flagged</span>
-              <div className="w-3 h-3 rounded-full bg-muted border border-muted-foreground"></div>
-              <span>Unanswered</span>
+
+            <div className="mt-6 pt-4 border-t border-slate-100 space-y-2">
+              <div className="flex items-center justify-between text-[10px] font-bold text-slate-500">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded bg-emerald-500"></div>
+                  <span>Answered</span>
+                </div>
+                <span>{answeredCount}</span>
+              </div>
+              <div className="flex items-center justify-between text-[10px] font-bold text-slate-500">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded bg-amber-500"></div>
+                  <span>Flagged</span>
+                </div>
+                <span>{Object.values(flagged).filter(Boolean).length}</span>
+              </div>
+              <div className="flex items-center justify-between text-[10px] font-bold text-slate-500">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded bg-slate-100 border border-slate-200"></div>
+                  <span>Unanswered</span>
+                </div>
+                <span>{questions.length - answeredCount}</span>
+              </div>
             </div>
           </Card>
         </aside>
 
-        <main className="flex-1 max-w-3xl">
-          {questions[currentIndex] && (
-            <Card className="p-6 md:p-8">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <span className="text-lg font-bold">
-                    Question {currentIndex + 1}
-                  </span>
-                  <span className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground">
-                    {questions[currentIndex].category || "General"}
-                  </span>
+        <main className="flex-1 max-w-3xl relative">
+          {isPaused && (
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-20 flex items-center justify-center rounded-3xl">
+              <div className="text-center p-8 bg-white rounded-3xl shadow-xl border border-slate-100 max-w-sm mx-auto">
+                <div 
+                  className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+                  style={{ backgroundColor: `${selectedProcess?.style.primary_color}20` }}
+                >
+                  <Pause className="w-8 h-8" style={{ color: selectedProcess?.style.primary_color }} />
                 </div>
-                <Button variant="ghost" size="sm" onClick={handleFlag} className="gap-1">
-                  <Flag className="w-4 h-4" />
-                  <span className="text-xs">
-                    {flagged[questions[currentIndex].id] ? "Unflag" : "Flag"}
-                  </span>
+                <h3 className="text-xl font-bold mb-2 text-slate-900">Assessment Paused</h3>
+                <p className="text-slate-500 text-sm mb-6">Take a breather. Your progress and timer are safe.</p>
+                <Button 
+                  onClick={togglePause} 
+                  className="w-full font-bold h-12 rounded-xl"
+                  style={{ backgroundColor: selectedProcess?.style.primary_color, color: 'white' }}
+                >
+                  Resume Assessment
                 </Button>
               </div>
-
-              <h3 className="text-xl font-bold mb-6">{questions[currentIndex].question_text}</h3>
-
-              <div className="space-y-3 mb-6">
-                {(
-                  questions[currentIndex].type === "MCQ" || 
-                  (!questions[currentIndex].type && (questions[currentIndex].option_a || questions[currentIndex].options))
-                ) ? (
-                  (questions[currentIndex].options || [
-                    questions[currentIndex].option_a, 
-                    questions[currentIndex].option_b, 
-                    questions[currentIndex].option_c, 
-                    questions[currentIndex].option_d
-                  ]).map((opt, i) => {
-                    if (!opt) return null;
-                    const key = String.fromCharCode(65 + i);
-                    const isSelected = answers[questions[currentIndex].id] === key;
-                    return (
-                      <Button
-                        key={key}
-                        variant="ghost"
-                        className={cn(
-                          "w-full justify-start text-left p-4 border border-muted rounded-lg",
-                          isSelected ? "border-primary bg-primary/5" : ""
-                        )}
-                        onClick={() => handleAnswerChange(questions[currentIndex].id, key, true)}
-                      >
-                        <span className="w-6 h-6 rounded-full bg-muted flex items-center justify-center mr-3">
-                          {key}
-                        </span>
-                        {opt}
-                      </Button>
-                    );
-                  })
-                ) : questions[currentIndex].type === "CHECKBOX" ? (
-                  questions[currentIndex].options?.map((opt, i) => {
-                    const key = String.fromCharCode(65 + i);
-                    const isChecked = (answers[questions[currentIndex].id] || []).includes(key);
-                    return (
-                      <Button
-                        key={key}
-                        variant="ghost"
-                        className={cn(
-                          "w-full justify-start text-left p-4 border border-muted rounded-lg",
-                          isChecked ? "border-primary bg-primary/5" : ""
-                        )}
-                        onClick={() => handleCheckboxChange(questions[currentIndex].id, key, !isChecked)}
-                      >
-                        <Checkbox 
-                          checked={isChecked} 
-                          onCheckedChange={(checked) => handleCheckboxChange(questions[currentIndex].id, key, !!checked)} 
-                          className="mr-3"
-                        />
-                        {opt}
-                      </Button>
-                    );
-                  })
-                ) : (
-                  <div className="space-y-4">
-                    <Label className="text-slate-500 mb-2 block">Your Answer</Label>
-                    <Input
-                      placeholder="Type your answer here..."
-                      className="h-16 text-lg rounded-2xl border-2 border-slate-100 focus:border-emerald-500 transition-all"
-                      value={answers[questions[currentIndex].id] || ""}
-                      onChange={(e) => handleAnswerChange(questions[currentIndex].id, e.target.value)}
-                    />
+            </div>
+          )}
+          
+          {questions[currentIndex] && (
+            <Card className="border-none shadow-sm rounded-3xl overflow-hidden">
+              <div className="h-1.5 w-full" style={{ backgroundColor: selectedProcess?.style.primary_color }}></div>
+              <div className="p-6 md:p-10">
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-4">
+                    <span className="bg-slate-900 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">
+                      Question {currentIndex + 1}
+                    </span>
+                    <span className="bg-slate-100 text-slate-500 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">
+                      {questions[currentIndex].category || "General"}
+                    </span>
                   </div>
-                )}
-              </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={handleFlag} 
+                    className={cn(
+                      "gap-2 font-bold rounded-full px-4 transition-colors",
+                      flagged[questions[currentIndex].id] ? "bg-amber-50 text-amber-600" : "text-slate-400 hover:bg-slate-50"
+                    )}
+                  >
+                    <Flag className={cn("w-4 h-4", flagged[questions[currentIndex].id] && "fill-current")} />
+                    <span className="text-xs">
+                      {flagged[questions[currentIndex].id] ? "Flagged" : "Flag"}
+                    </span>
+                  </Button>
+                </div>
 
-              <div className="flex justify-between">
-                <Button
-                  variant="outline"
-                  onClick={handlePrevious}
-                  disabled={currentIndex === 0}
-                  className="gap-2"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  Previous
-                </Button>
-                <Button
-                  onClick={handleNext}
-                  disabled={currentIndex === questions.length - 1}
-                  className="gap-2"
-                >
-                  Next
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
+                <h3 className="text-2xl font-bold text-slate-800 leading-tight mb-10">
+                  {questions[currentIndex].question_text}
+                </h3>
 
-              <div className="text-center mt-6">
-                <Button
-                  onClick={handleSubmit}
-                  disabled={loading || answeredCount === 0}
-                  className="min-w-[250px]"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                      Submitting...
-                    </>
+                <div className="space-y-4 mb-10">
+                  {(
+                    questions[currentIndex].type === "MCQ" || 
+                    (!questions[currentIndex].type && (questions[currentIndex].option_a || questions[currentIndex].options))
+                  ) ? (
+                    <div className="grid grid-cols-1 gap-4">
+                      {(questions[currentIndex].options || [
+                        questions[currentIndex].option_a, 
+                        questions[currentIndex].option_b, 
+                        questions[currentIndex].option_c, 
+                        questions[currentIndex].option_d
+                      ]).map((opt, i) => {
+                        if (!opt) return null;
+                        const key = String.fromCharCode(65 + i);
+                        const isSelected = answers[questions[currentIndex].id] === key;
+                        return (
+                          <button
+                            key={key}
+                            className={cn(
+                              "w-full flex items-center gap-5 p-5 text-left border-2 rounded-2xl transition-all duration-200 group",
+                              isSelected 
+                                ? "border-slate-900 bg-slate-50 shadow-md" 
+                                : "border-slate-100 bg-white hover:border-slate-200 hover:bg-slate-50"
+                            )}
+                            onClick={() => handleAnswerChange(questions[currentIndex].id, key, true)}
+                            style={isSelected ? { borderColor: selectedProcess?.style.primary_color } : {}}
+                          >
+                            <span className={cn(
+                              "w-10 h-10 shrink-0 rounded-xl font-black flex items-center justify-center transition-colors",
+                              isSelected 
+                                ? "text-white" 
+                                : "bg-slate-100 text-slate-400 group-hover:bg-slate-200"
+                            )}
+                            style={isSelected ? { backgroundColor: selectedProcess?.style.primary_color } : {}}
+                            >
+                              {key}
+                            </span>
+                            <span className={cn(
+                              "font-bold text-lg",
+                              isSelected ? "text-slate-900" : "text-slate-600"
+                            )}>
+                              {opt}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : questions[currentIndex].type === "CHECKBOX" ? (
+                    <div className="grid grid-cols-1 gap-4">
+                      {questions[currentIndex].options?.map((opt, i) => {
+                        const key = String.fromCharCode(65 + i);
+                        const isChecked = (answers[questions[currentIndex].id] || []).includes(key);
+                        return (
+                          <button
+                            key={key}
+                            className={cn(
+                              "w-full flex items-center gap-5 p-5 text-left border-2 rounded-2xl transition-all duration-200 group",
+                              isChecked 
+                                ? "border-slate-900 bg-slate-50 shadow-md" 
+                                : "border-slate-100 bg-white hover:border-slate-200 hover:bg-slate-50"
+                            )}
+                            onClick={() => handleCheckboxChange(questions[currentIndex].id, key, !isChecked)}
+                            style={isChecked ? { borderColor: selectedProcess?.style.primary_color } : {}}
+                          >
+                            <div className={cn(
+                              "w-10 h-10 shrink-0 rounded-xl flex items-center justify-center transition-colors",
+                              isChecked 
+                                ? "text-white" 
+                                : "bg-slate-100 text-slate-400 group-hover:bg-slate-200"
+                            )}
+                            style={isChecked ? { backgroundColor: selectedProcess?.style.primary_color } : {}}
+                            >
+                              <Checkbox 
+                                checked={isChecked} 
+                                onCheckedChange={(checked) => handleCheckboxChange(questions[currentIndex].id, key, !!checked)} 
+                                className={cn("border-none", isChecked ? "text-white" : "text-transparent")}
+                              />
+                            </div>
+                            <span className={cn(
+                              "font-bold text-lg",
+                              isChecked ? "text-slate-900" : "text-slate-600"
+                            )}>
+                              {opt}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   ) : (
-                    "Submit Questionnaire"
+                    <div className="space-y-4">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Your Written Answer</Label>
+                      <Input
+                        placeholder="Start typing your answer here..."
+                        className="h-20 text-xl px-6 rounded-2xl border-2 border-slate-100 focus:border-slate-900 transition-all shadow-sm"
+                        value={answers[questions[currentIndex].id] || ""}
+                        onChange={(e) => handleAnswerChange(questions[currentIndex].id, e.target.value)}
+                        style={{ "--tw-ring-color": selectedProcess?.style.primary_color } as any}
+                      />
+                    </div>
                   )}
-                </Button>
+                </div>
+
+                <div className="flex items-center justify-between pt-8 border-t border-slate-100">
+                  <Button
+                    variant="ghost"
+                    onClick={handlePrevious}
+                    disabled={currentIndex === 0}
+                    className="gap-2 font-bold h-12 rounded-xl text-slate-500"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                    Previous
+                  </Button>
+                  
+                  <div className="flex gap-3">
+                    {currentIndex === questions.length - 1 ? (
+                      <Button
+                        onClick={handleSubmit}
+                        disabled={loading || !allRequirementsMet}
+                        className={cn(
+                          "gap-2 font-bold h-12 px-8 rounded-xl transition-all duration-300",
+                          allRequirementsMet 
+                            ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20" 
+                            : "bg-slate-200 text-slate-400 cursor-not-allowed"
+                        )}
+                        style={allRequirementsMet ? {} : { backgroundColor: '#e2e8f0', color: '#94a3b8' }}
+                      >
+                        Finish Assessment
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={handleNext}
+                        className="gap-2 font-bold h-12 px-8 rounded-xl shadow-lg shadow-primary/20"
+                        style={{ backgroundColor: selectedProcess?.style.primary_color, color: 'white' }}
+                      >
+                        Next Question
+                        <ChevronRight className="w-5 h-5" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
               </div>
             </Card>
           )}

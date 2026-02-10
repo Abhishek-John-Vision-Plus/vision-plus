@@ -115,14 +115,23 @@ Validation occurs on the backend during submission, cross-referencing the initia
 ## ✨ Key Features
 
 - **🛡️ High Integrity**: Randomization occurs only once per session. Refreshing the browser preserves the same questions in the same order.
-- **🏷️ Topic-Based Control**: Admins can define exactly how many questions from each category (e.g., "Aadhaar Basics", "ElderLine Protocol") must be attempted.
+- **🎨 Dynamic Process Theming**: The entire assessment UI (header, progress bars, active states) dynamically adapts its theme colors based on the selected process (e.g., Vision Plus, ElderLine).
+- **📊 Real-time Progress Tracking**: A persistent sidebar "Progress Tracker" shows category-specific progress, including Answered, Required, and Assigned counts.
+- **✅ Requirement-Locked Submission**: The submit button remains disabled until all admin-defined category requirements (e.g., "Must answer 3 out of 5 Aadhaar questions") are met.
+- **🏷️ Topic-Based Control**: Admins can define exactly how many questions from each category must be attempted.
 - **🏢 Multi-Process Support**: Role-based access control (RBAC) allows Process Admins to manage their specific departments without seeing others.
 - **📈 Real-time Analytics**: Detailed breakdown of correct/wrong answers, percentages, and completion status.
 - **🧠 Intelligent Normalization**: Handles inconsistent data entry (e.g., "ElderLine" vs "Elder Line") automatically using a normalization layer.
 
 ---
 
-## 🛠️ Tech Stack
+## � Detailed Guides
+
+- **[Questionnaire System Guide](QUESTIONNAIRE_GUIDE.md)**: Deep dive into the assessment engine, UI theming, and validation logic.
+
+---
+
+## �🛠️ Tech Stack
 
 - **Frontend**: Next.js 14 (App Router), Tailwind CSS, Lucide React, Shadcn UI
 - **Backend**: Next.js API Routes, Prisma ORM
