@@ -1,4 +1,4 @@
-name: Mirror to Repo B
+name: Mirror to Repo B 
 
 on:
   push:
